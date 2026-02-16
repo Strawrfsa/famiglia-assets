@@ -105,7 +105,7 @@
     <!-- WALLET MODAL -->
     <div class="overlay" id="walletOv" onclick="closeWallet()"></div>
     <div class="modal wallet-modal" id="walletMod">
-        <div class="wallet-header"><h3>ENTRA NELLA FAMIGLIA</h3><p>Connect your wallet to join the family</p></div>
+        <div class="wallet-header"><h3>JOIN THE FAMILY</h3><p>Entra nella famiglia</p></div>
         <div class="wallet-body">
             <div class="wallet-options">
                 <button class="wallet-btn" onclick="connectWallet('phantom')"><span class="wallet-icon">👻</span>Phantom</button>
@@ -116,7 +116,7 @@
                 <button class="wallet-btn" onclick="connectWallet('coinbase')"><span class="wallet-icon">🔷</span>Coinbase Wallet</button>
             </div>
             <div class="wallet-status" id="walletStatus"></div>
-            <button class="btn-ghost" onclick="closeWallet()" style="width:100%;margin-top:15px">CHIUDI</button>
+            <button class="btn-ghost" onclick="closeWallet()" style="width:100%;margin-top:15px">CLOSE</button>
         </div>
     </div>
 
@@ -124,8 +124,8 @@
     <div class="overlay" id="shopOv" onclick="closeShop()"></div>
     <div class="modal shop-modal" id="shopMod">
         <div class="shop-header">
-            <h2>Il Mercato Nero</h2>
-            <p>— The Black Market —</p>
+            <h2>The Black Market</h2>
+            <p>— Il Mercato Nero —</p>
         </div>
         <div class="shop-body">
             <div class="shop-balance">YOUR BALANCE: <span id="shopBal">$50,000</span></div>
@@ -134,15 +134,15 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">🎰</div>
                     <div class="shop-item-info">
-                        <h4>La Corona d'Oro</h4>
-                        <p>The Golden Crown Casino</p>
+                        <h4>The Golden Crown Casino</h4>
+                        <p>La Corona d'Oro</p>
                     </div>
                 </div>
                 <div class="shop-item-desc">A high-stakes casino where fortunes are won and lost. Poker tables, slot machines, and VIP lounges — the crown jewel of your empire.</div>
                 <div class="shop-item-stats">
                     <div class="shop-item-stat"><span class="label">PRICE</span><span class="val">$25K</span></div>
                     <div class="shop-item-stat"><span class="label">INCOME</span><span class="val">$500/h</span></div>
-                    <div class="shop-item-stat"><span class="label">RISK</span><span class="val" style="color:#ff6347">ALTO</span></div>
+                    <div class="shop-item-stat"><span class="label">RISK</span><span class="val" style="color:#ff6347">HIGH</span></div>
                 </div>
             </div>
 
@@ -151,8 +151,8 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">🍸</div>
                     <div class="shop-item-info">
-                        <h4>Ombra Nera</h4>
-                        <p>The Dark Shadow Lounge</p>
+                        <h4>The Dark Shadow Lounge</h4>
+                        <p>Ombra Nera</p>
                     </div>
                 </div>
                 <div class="shop-item-stats">
@@ -166,8 +166,8 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">🏨</div>
                     <div class="shop-item-info">
-                        <h4>Il Palazzo</h4>
-                        <p>The Palace Hotel</p>
+                        <h4>The Palace Hotel</h4>
+                        <p>Il Palazzo</p>
                     </div>
                 </div>
                 <div class="shop-item-stats">
@@ -177,8 +177,8 @@
             </div>
 
             <div class="shop-footer">
-                <button class="btn-gold" id="buyBtn" onclick="enterPlacement()">PIAZZA — PLACE</button>
-                <button class="btn-ghost" onclick="closeShop()">CHIUDI</button>
+                <button class="btn-gold" id="buyBtn" onclick="enterPlacement()">PLACE CASINO</button>
+                <button class="btn-ghost" onclick="closeShop()">CANCEL</button>
             </div>
         </div>
     </div>
@@ -188,16 +188,16 @@
         <canvas id="cv"></canvas>
         <div style="position:absolute;inset:0;pointer-events:none">
             <div class="hud">
-                <div class="hud-title">La Famiglia</div>
-                <div class="hud-row"><span>💰 Soldi</span><span>$<span id="hMoney">50,000</span></span></div>
+                <div class="hud-title">The Family <span style="font-family:'Cormorant Garamond',serif;font-size:.8rem;opacity:.5;font-style:italic;display:block;margin-top:2px">La Famiglia</span></div>
+                <div class="hud-row"><span>💰 Money</span><span>$<span id="hMoney">50,000</span></span></div>
                 <div class="hud-div"></div>
-                <div class="hud-row"><span>🎰 Casinò</span><span id="hCount">0</span></div>
-                <div class="hud-row"><span>💵 Reddito/h</span><span>$<span id="hIncome">0</span></span></div>
+                <div class="hud-row"><span>🎰 Casinos</span><span id="hCount">0</span></div>
+                <div class="hud-row"><span>💵 Income/h</span><span>$<span id="hIncome">0</span></span></div>
                 <div class="hud-div"></div>
-                <button class="hud-btn" onclick="openShop()">IL MERCATO NERO</button>
+                <button class="hud-btn" onclick="openShop()">THE BLACK MARKET</button>
             </div>
-            <div class="minimap-wrap"><canvas id="mm" width="200" height="200" style="display:block"></canvas><div class="minimap-label">MAPPA</div></div>
-            <div class="ctrl"><div class="ctrl-t">CONTROLLI</div><div>🖱️ Left Click — Move</div><div>🏢 Shop — Buy & Place</div><div>🔍 Scroll — Zoom</div></div>
+            <div class="minimap-wrap"><canvas id="mm" width="200" height="200" style="display:block"></canvas><div class="minimap-label">MAP</div></div>
+            <div class="ctrl"><div class="ctrl-t">CONTROLS</div><div>🖱️ Left Click — Move</div><div>🏢 Shop — Buy & Place</div><div>🔍 Scroll — Zoom</div></div>
         </div>
     </div>
 
@@ -270,7 +270,7 @@
         if(money<PRICE){toast('NOT ENOUGH MONEY!');return}
         money-=PRICE;exitPlacement();
         loader.load(GLB,g=>{
-            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.5,.5,.5);
+            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.5,.5,.5);m.rotation.y=Math.PI;
             m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
             scene.add(m);casinos.push({model:m,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
         },undefined,()=>{
@@ -300,8 +300,90 @@
 
     window.addEventListener('load',()=>{
         const cv=document.getElementById('cv');
-        scene=new THREE.Scene();scene.background=new THREE.Color(0x080808);scene.fog=new THREE.FogExp2(0x080808,.015);
-        camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,500);
+        scene=new THREE.Scene();scene.background=new THREE.Color(0x080808);scene.fog=new THREE.FogExp2(0x080808,.008);
+        camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,800);
+
+        // === SKY DOME ===
+        const skyGeo=new THREE.SphereGeometry(300,32,16);
+        const skyMat=new THREE.ShaderMaterial({
+            uniforms:{uTime:{value:0},uSunPos:{value:new THREE.Vector3(0,.3,1)}},
+            vertexShader:`varying vec3 vPos;void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+            fragmentShader:`
+                uniform float uTime;uniform vec3 uSunPos;varying vec3 vPos;
+                void main(){
+                    vec3 dir=normalize(vPos);float h=dir.y*.5+.5;
+                    float sunY=sin(uTime*.05);
+                    vec3 dayTop=vec3(.15,.25,.55);vec3 dayBot=vec3(.6,.5,.35);
+                    vec3 sunsetTop=vec3(.15,.08,.2);vec3 sunsetBot=vec3(.7,.25,.1);
+                    vec3 nightTop=vec3(.02,.02,.06);vec3 nightBot=vec3(.03,.03,.08);
+                    float dayF=smoothstep(-.2,.3,sunY);float sunsetF=smoothstep(-.3,0.,sunY)*smoothstep(.3,0.,sunY);
+                    vec3 top=mix(nightTop,dayTop,dayF)+sunsetTop*sunsetF;
+                    vec3 bot=mix(nightBot,dayBot,dayF)+sunsetBot*sunsetF;
+                    vec3 col=mix(bot,top,h);
+                    // Sun glow
+                    vec3 sunDir=normalize(vec3(cos(uTime*.05)*.8,sunY,sin(uTime*.05)*.8));
+                    float sunDot=max(dot(dir,sunDir),0.);
+                    col+=vec3(1.,.7,.3)*pow(sunDot,64.)*.8;
+                    col+=vec3(1.,.5,.2)*pow(sunDot,8.)*.3;
+                    // Stars at night
+                    float nightF=1.-dayF;
+                    float star=step(.998,fract(sin(dot(floor(dir*300.),vec3(12.9898,78.233,45.164)))*43758.5453));
+                    col+=vec3(1.)*star*nightF*.6;
+                    gl_FragColor=vec4(col,1.);
+                }`,
+            side:THREE.BackSide
+        });
+        const sky=new THREE.Mesh(skyGeo,skyMat);scene.add(sky);
+
+        // === OUTER LANDSCAPE (beyond playable area) ===
+        const outerGround=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x1a1a12,roughness:1,metalness:0}));
+        outerGround.rotation.x=-Math.PI/2;outerGround.position.y=-.05;outerGround.name='g';scene.add(outerGround);
+        // Distant buildings silhouettes
+        const silMat=new THREE.MeshStandardMaterial({color:0x111118,roughness:.9,metalness:.1});
+        for(let i=0;i<60;i++){
+            const bw=3+Math.random()*6,bh=8+Math.random()*25,bd=3+Math.random()*6;
+            const bld=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),silMat);
+            const angle=Math.random()*Math.PI*2;const dist=65+Math.random()*120;
+            bld.position.set(Math.cos(angle)*dist,bh/2,Math.sin(angle)*dist);
+            bld.rotation.y=Math.random()*Math.PI;
+            // Random lit windows
+            const winMat=new THREE.MeshBasicMaterial({color:0xffdd88,transparent:true,opacity:.4+Math.random()*.4});
+            for(let w=0;w<~~(Math.random()*6);w++){
+                const win=new THREE.Mesh(new THREE.PlaneGeometry(.6,.8),winMat);
+                win.position.set((Math.random()-.5)*bw*.6,Math.random()*bh*.6-bh*.1,bd/2+.01);
+                bld.add(win)}
+            scene.add(bld)}
+        // Distant trees/poles
+        for(let i=0;i<30;i++){
+            const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.1,.15,4,5),new THREE.MeshStandardMaterial({color:0x2a1a0a}));
+            const angle=Math.random()*Math.PI*2;const dist=55+Math.random()*80;
+            trunk.position.set(Math.cos(angle)*dist,2,Math.sin(angle)*dist);scene.add(trunk);
+            const canopy=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),6,6),new THREE.MeshStandardMaterial({color:0x0a1a0a}));
+            canopy.position.set(trunk.position.x,4.5+Math.random(),trunk.position.z);scene.add(canopy)}
+
+        // === BARRICADES around playable area (±48) ===
+        const BOUND=46;
+        const barMat=new THREE.MeshStandardMaterial({color:0x444,metalness:.6,roughness:.4});
+        const barYellow=new THREE.MeshStandardMaterial({color:0xccaa00,roughness:.7});
+        // Jersey barriers along edges
+        for(let side=0;side<4;side++){
+            for(let i=-BOUND;i<=BOUND;i+=4){
+                const barrier=new THREE.Group();
+                const base=new THREE.Mesh(new THREE.BoxGeometry(3.5,.9,1),barMat);base.position.y=.45;barrier.add(base);
+                const stripe=new THREE.Mesh(new THREE.BoxGeometry(3.5,.15,1.02),barYellow);stripe.position.y=.7;barrier.add(stripe);
+                if(side===0) barrier.position.set(i,0,-BOUND);
+                else if(side===1) barrier.position.set(i,0,BOUND);
+                else if(side===2){barrier.position.set(-BOUND,0,i);barrier.rotation.y=Math.PI/2}
+                else{barrier.position.set(BOUND,0,i);barrier.rotation.y=Math.PI/2}
+                barrier.castShadow=true;scene.add(barrier)}
+            // Wrecked cars at corners and gaps
+            if(side<2){
+                const wc=new THREE.Group();const wcm=new THREE.MeshStandardMaterial({color:0x333,metalness:.7,roughness:.3});
+                wc.add(M(new THREE.BoxGeometry(2,.8,4.5),wcm,0,.4,0,true));
+                wc.add(M(new THREE.BoxGeometry(1.6,.5,1.5),wcm,0,1.05,-.4));
+                const zz=side===0?-BOUND-1:BOUND+1;
+                wc.position.set(-BOUND+5,0,zz);wc.rotation.y=Math.PI*.15+side*Math.PI;scene.add(wc);
+                const wc2=wc.clone();wc2.position.set(BOUND-8,0,zz);wc2.rotation.y=-Math.PI*.2+side*Math.PI;scene.add(wc2)}}
         camera.position.set(0,camDist,22);camera.lookAt(0,0,0);
         renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
         renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -309,8 +391,8 @@
         renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
         loader=new THREE.GLTFLoader();
 
-        // === LIGHTS (limited to avoid MAX_TEXTURE_IMAGE_UNITS) ===
-        scene.add(new THREE.AmbientLight(0xffeedd,.35));
+        // === LIGHTS ===
+        const ambient=new THREE.AmbientLight(0xffeedd,.35);scene.add(ambient);
         const sun=new THREE.DirectionalLight(0xffd080,.8);sun.position.set(15,35,15);sun.castShadow=true;
         sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-50;sun.shadow.camera.right=50;
         sun.shadow.camera.top=50;sun.shadow.camera.bottom=-50;scene.add(sun);
@@ -402,11 +484,13 @@
         gl.rotation.x=-Math.PI/2;gl.position.y=.03;scene.add(gl);player.gl=gl;
 
         // === CONTROLS ===
+        const PLIM=44;
         const ray=new THREE.Raycaster(),mo=new THREE.Vector2();
         function gp(e){mo.x=(e.clientX/innerWidth)*2-1;mo.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mo,camera);
             const h=ray.intersectObjects(scene.children.filter(o=>o.name==='g'));return h.length?h[0].point:null}
         cv.addEventListener('click',e=>{if(!gameActive)return;const pt=gp(e);if(!pt)return;
-            if(placing){placeCasino({x:pt.x,z:pt.z})}else{target={x:pt.x,z:pt.z};moving=true;makeWP(pt)}});
+            const cx=Math.max(-PLIM,Math.min(PLIM,pt.x)),cz=Math.max(-PLIM,Math.min(PLIM,pt.z));
+            if(placing){placeCasino({x:cx,z:cz})}else{target={x:cx,z:cz};moving=true;makeWP({x:cx,y:.1,z:cz})}});
         cv.addEventListener('contextmenu',e=>{e.preventDefault();if(placing)exitPlacement()});
         cv.addEventListener('mousemove',e=>{if(!placing||!placeGlow)return;const pt=gp(e);if(!pt)return;
             placeGlow.position.set(pt.x,.1,pt.z);placeInner.position.set(pt.x,.08,pt.z);
@@ -415,8 +499,21 @@
 
         // === ANIMATE ===
         (function run(){if(!gameActive)return;requestAnimationFrame(run);const t=Date.now()*.001;
+            // Day/night cycle
+            const sunY=Math.sin(t*.05);
+            skyMat.uniforms.uTime.value=t;
+            const dayF=Math.max(0,Math.min(1,(sunY+.2)/.5));
+            ambient.intensity=.1+dayF*.3;
+            sun.intensity=.2+dayF*.7;
+            sun.position.set(Math.cos(t*.05)*40,15+sunY*25,Math.sin(t*.05)*40);
+            const fogC=new THREE.Color().lerpColors(new THREE.Color(0x020208),new THREE.Color(0x1a1815),dayF);
+            scene.fog.color.copy(fogC);
+
             if(moving&&target){const dx=target.x-player.position.x,dz=target.z-player.position.z,d=Math.sqrt(dx*dx+dz*dz);
                 if(d>.5){player.position.x+=(dx/d)*.22;player.position.z+=(dz/d)*.22;
+                    // Clamp to bounds
+                    player.position.x=Math.max(-PLIM,Math.min(PLIM,player.position.x));
+                    player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
                     player.mk.position.set(player.position.x,.05,player.position.z);
                     player.gl.position.set(player.position.x,.03,player.position.z);
                     player.rotation.y=Math.atan2(dx,dz);player.position.y=Math.sin(t*8)*.08;

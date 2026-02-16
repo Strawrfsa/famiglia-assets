@@ -3,402 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAMIGLIA - Build Your Empire</title>
+    <title>FAMIGLIA - Mafia Empire on Solana</title>
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Cinzel:wght@400;600;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --blood-red: #8B0000;
-            --gold: #D4AF37;
-            --cream: #F5E6D3;
-            --black: #0A0A0A;
-            --grey: #1A1A1A;
+            --blood-red: #8B0000; --gold: #D4AF37; --dark-gold: #9B7E2B;
+            --cream: #F5E6D3; --black: #0A0A0A; --grey: #1A1A1A; --smoke: #2A2A2A;
         }
         body {
-            font-family: 'Crimson Text', serif;
-            background: var(--black);
-            color: var(--cream);
-            overflow: hidden;
+            font-family: 'Crimson Text', serif; background: var(--black); color: var(--cream); overflow: hidden;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="rgba(212,175,55,0.3)" stroke="%23D4AF37" stroke-width="1"/></svg>'), auto;
         }
-        
-        #shop {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(26,26,26,0.95);
-            padding: 20px;
-            border: 3px solid var(--gold);
-            z-index: 1000;
-            min-width: 300px;
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.05"/></svg>');
+            pointer-events: none; z-index: 9999; mix-blend-mode: overlay;
         }
-        
-        #shop h2 {
-            font-family: 'Cinzel', serif;
-            color: var(--gold);
-            margin-bottom: 15px;
+        body::after {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none; z-index: 9998;
         }
-        
-        .shop-item {
-            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            padding: 15px;
-            margin: 10px 0;
-            border: 2px solid var(--gold);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .shop-item:hover {
-            background: linear-gradient(135deg, var(--gold), #9B7E2B);
-            color: var(--black);
-            transform: translateX(5px);
-        }
-        
-        .shop-item h3 {
-            font-family: 'Cinzel', serif;
-            margin-bottom: 5px;
-        }
-        
-        #hud {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(26,26,26,0.95);
-            padding: 20px;
-            border: 2px solid var(--gold);
-            z-index: 1000;
-        }
-        
-        #hud div {
-            color: var(--cream);
-            margin: 5px 0;
-        }
-        
-        .placing-mode {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--blood-red);
-            color: var(--gold);
-            padding: 15px 30px;
-            border: 2px solid var(--gold);
-            font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
-            z-index: 1000;
-            display: none;
-        }
+        .wallet-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(26,26,26,0.98); padding: 40px; border: 3px solid var(--gold); clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); z-index: 10001; min-width: 400px; }
+        .wallet-modal.active { display: block; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; }
+        .modal-overlay.active { display: block; }
+        .wallet-modal h3 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 2rem; margin-bottom: 30px; text-align: center; letter-spacing: 2px; }
+        .wallet-options { display: flex; flex-direction: column; gap: 15px; }
+        .wallet-btn { font-family: 'Cinzel', serif; background: linear-gradient(135deg, var(--smoke) 0%, var(--grey) 100%); color: var(--cream); border: 2px solid var(--gold); padding: 15px 25px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 15px; letter-spacing: 1px; }
+        .wallet-btn:hover { background: linear-gradient(135deg, var(--gold), var(--dark-gold)); color: var(--black); transform: translateX(5px); }
+        .wallet-icon { font-size: 1.5rem; }
+        .wallet-status { color: var(--gold); font-size: 0.9rem; text-align: center; margin-top: 15px; }
+        .close-modal { font-family: 'Cinzel', serif; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 10px 20px; font-size: 1rem; cursor: pointer; margin-top: 20px; width: 100%; letter-spacing: 2px; }
+        .close-modal:hover { background: var(--blood-red); border-color: var(--blood-red); }
+        .top-buttons { position: fixed; top: 20px; right: 20px; display: flex; gap: 15px; z-index: 10000; pointer-events: auto; }
+        .top-btn { font-family: 'Cinzel', serif; background: linear-gradient(135deg, var(--gold), var(--dark-gold)); color: var(--black); border: none; padding: 12px 25px; font-size: 1rem; font-weight: 600; cursor: pointer; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); transition: all 0.3s; letter-spacing: 2px; }
+        .top-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(212,175,55,0.4); }
+        .wallet-connected { background: linear-gradient(135deg, var(--blood-red), #A00000); color: var(--gold); }
     </style>
 </head>
 <body>
-    <div id="shop">
-        <h2>🏪 SHOP</h2>
-        <div class="shop-item" onclick="buyBuilding('casino')">
-            <h3>🎰 Harlem Casino</h3>
-            <p>💰 Price: $25,000</p>
-            <p>💵 Income: $500/h</p>
+    <div class="top-buttons">
+        <button class="top-btn" id="walletBtn" onclick="openWalletModal()">CONNECT WALLET</button>
+        <button class="top-btn" onclick="window.open('docs.html', '_blank')">DOCS</button>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeWalletModal()"></div>
+    <div class="wallet-modal" id="walletModal">
+        <h3>CONNECT WALLET</h3>
+        <div class="wallet-options">
+            <button class="wallet-btn" onclick="connectWallet('phantom')"><span class="wallet-icon">👻</span><span>Phantom</span></button>
+            <button class="wallet-btn" onclick="connectWallet('solflare')"><span class="wallet-icon">🔥</span><span>Solflare</span></button>
+            <button class="wallet-btn" onclick="connectWallet('backpack')"><span class="wallet-icon">🎒</span><span>Backpack</span></button>
+            <button class="wallet-btn" onclick="connectWallet('glow')"><span class="wallet-icon">✨</span><span>Glow</span></button>
+            <button class="wallet-btn" onclick="connectWallet('trust')"><span class="wallet-icon">🛡️</span><span>Trust Wallet</span></button>
+            <button class="wallet-btn" onclick="connectWallet('coinbase')"><span class="wallet-icon">🔷</span><span>Coinbase Wallet</span></button>
+        </div>
+        <div class="wallet-status" id="walletStatus"></div>
+        <button class="close-modal" onclick="closeWalletModal()">CLOSE</button>
+    </div>
+
+    <div id="gameContainer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+        <canvas id="gameCanvas"></canvas>
+        <div id="gameUI" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+            <!-- HUD -->
+            <div style="position: absolute; top: 20px; left: 20px; background: rgba(26,26,26,0.95); padding: 20px; border: 2px solid var(--gold); clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); pointer-events: auto;">
+                <div style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.2rem; margin-bottom: 10px;">YOUR EMPIRE</div>
+                <div style="color: var(--cream); font-size: 1rem; margin: 5px 0;">💰 Money: $<span id="playerMoney">50000</span></div>
+                <div style="color: var(--cream); font-size: 1rem; margin: 5px 0;">🏢 Casinos: <span id="propertyCount">0</span></div>
+                <div style="color: var(--cream); font-size: 1rem; margin: 5px 0;">💵 Income/h: $<span id="incomePerHour">0</span></div>
+            </div>
+
+            <!-- Shop popup -->
+            <div id="propertyShop" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(26,26,26,0.98); padding: 40px; border: 3px solid var(--gold); clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); pointer-events: auto; min-width: 400px;">
+                <h3 style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 2rem; margin-bottom: 20px; text-align: center;">🎰 HARLEM CASINO</h3>
+                <div style="color: var(--cream); margin-bottom: 20px; line-height: 1.6;">Place your casino empire on these streets. Each casino generates passive income for the family.</div>
+                <div style="color: var(--gold); font-size: 1.3rem; margin-bottom: 10px;">💰 Price: $25,000</div>
+                <div style="color: var(--gold); font-size: 1.1rem; margin-bottom: 30px;">💵 Income: $500/hour</div>
+                <div style="display: flex; gap: 20px; justify-content: center;">
+                    <button onclick="placeCasino()" style="font-family: 'Cinzel', serif; background: var(--blood-red); color: var(--gold); border: none; padding: 15px 30px; font-size: 1.1rem; cursor: pointer; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); font-weight: 600; letter-spacing: 2px;">PLACE CASINO</button>
+                    <button onclick="closeShop()" style="font-family: 'Cinzel', serif; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 15px 30px; font-size: 1.1rem; cursor: pointer; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); font-weight: 600; letter-spacing: 2px;">CANCEL</button>
+                </div>
+            </div>
+
+            <!-- Minimap -->
+            <div style="position: absolute; bottom: 20px; right: 20px; width: 200px; height: 200px; background: rgba(26,26,26,0.95); border: 3px solid var(--gold); pointer-events: auto; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);">
+                <canvas id="minimap" width="200" height="200" style="display: block;"></canvas>
+                <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); color: var(--gold); font-size: 0.8rem; font-family: 'Cinzel', serif; letter-spacing: 1px;">MAP</div>
+            </div>
+
+            <!-- Controls -->
+            <div style="position: absolute; bottom: 230px; right: 20px; background: rgba(26,26,26,0.9); padding: 10px 15px; border: 2px solid var(--gold); color: var(--cream); font-size: 0.85rem; max-width: 200px;">
+                <div style="color: var(--gold); font-family: 'Cinzel', serif; margin-bottom: 5px; font-size: 0.9rem;">CONTROLS</div>
+                <div>🖱️ Left Click: Move</div>
+                <div>🏢 Right Click: Place Casino</div>
+            </div>
         </div>
     </div>
-    
-    <div id="hud">
-        <div style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.2rem;">YOUR EMPIRE</div>
-        <div>💰 Money: $<span id="money">50000</span></div>
-        <div>🏢 Buildings: <span id="buildingCount">0</span></div>
-    </div>
-    
-    <div class="placing-mode" id="placingMode">
-        Click on map to place building
-    </div>
-    
-    <canvas id="gameCanvas"></canvas>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script>
-        let scene, camera, renderer, player;
-        let playerMoney = 50000;
-        let buildings = [];
-        let casinoModel = null;
-        let placingMode = false;
-        let buildingToPlace = null;
+        let gameActive = true, scene, camera, renderer, player;
+        let playerMoney = 50000, placedCasinos = [], targetPosition = null, isMoving = false, connectedWallet = null;
+        let pendingPlacement = null, casinoModel = null, loader;
+        const CASINO_PRICE = 25000, CASINO_INCOME = 500;
+        const GLB_URL = 'https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/harlem_casino.glb';
+
+        // Wallet functions
+        function openWalletModal() { document.getElementById('walletModal').classList.add('active'); document.getElementById('modalOverlay').classList.add('active'); }
+        function closeWalletModal() { document.getElementById('walletModal').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
+        function connectWallet(type) {
+            connectedWallet = type;
+            const btn = document.getElementById('walletBtn'), status = document.getElementById('walletStatus');
+            status.textContent = `Connecting to ${type}...`;
+            setTimeout(() => {
+                const addr = Array.from({length:44}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789'[Math.floor(Math.random()*57)]).join('');
+                status.textContent = `Connected: ${addr}`;
+                btn.textContent = `${addr.substring(0,4)}...${addr.slice(-4)}`;
+                btn.classList.add('wallet-connected');
+                setTimeout(closeWalletModal, 1500);
+            }, 1000);
+        }
+
+        function closeShop() { document.getElementById('propertyShop').style.display = 'none'; pendingPlacement = null; }
+
+        function placeCasino() {
+            if (!pendingPlacement) return;
+            if (playerMoney < CASINO_PRICE) { alert('Not enough money!'); return; }
+            playerMoney -= CASINO_PRICE;
+            const pos = pendingPlacement;
+            closeShop();
+
+            // Load and place the GLB model
+            loader.load(GLB_URL, (gltf) => {
+                const model = gltf.scene.clone();
+                model.position.set(pos.x, 0, pos.z);
+                model.scale.set(2, 2, 2);
+                model.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+                scene.add(model);
+                placedCasinos.push({ model, pos });
+                updateUI();
+            }, undefined, (err) => {
+                // Fallback box if GLB fails to load
+                const box = new THREE.Mesh(
+                    new THREE.BoxGeometry(6, 8, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x8B0000, emissive: 0xff0000, emissiveIntensity: 0.3 })
+                );
+                box.position.set(pos.x, 4, pos.z);
+                box.castShadow = true;
+                scene.add(box);
+                placedCasinos.push({ model: box, pos });
+                updateUI();
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('playerMoney').textContent = playerMoney.toLocaleString();
+            document.getElementById('propertyCount').textContent = placedCasinos.length;
+            document.getElementById('incomePerHour').textContent = (placedCasinos.length * CASINO_INCOME).toLocaleString();
+        }
 
         window.addEventListener('load', () => {
-            initGame();
-            loadCasinoModel();
-        });
-
-        function initGame() {
             const canvas = document.getElementById('gameCanvas');
-            
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
             scene.fog = new THREE.Fog(0x0a0a0a, 50, 100);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
             camera.position.set(0, 40, 30);
             camera.lookAt(0, 0, 0);
-
             renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(innerWidth, innerHeight);
             renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            loader = new THREE.GLTFLoader();
 
-            const ambientLight = new THREE.AmbientLight(0xffd700, 0.3);
-            scene.add(ambientLight);
+            // Lights
+            scene.add(new THREE.AmbientLight(0xffd700, 0.3));
+            const dir = new THREE.DirectionalLight(0xffd700, 0.8);
+            dir.position.set(10, 30, 10); dir.castShadow = true;
+            dir.shadow.mapSize.width = 2048; dir.shadow.mapSize.height = 2048;
+            scene.add(dir);
+            const sp1 = new THREE.SpotLight(0x8B0000, 0.5); sp1.position.set(-20, 25, -20); sp1.angle = Math.PI/6; sp1.penumbra = 0.5; scene.add(sp1);
+            const sp2 = new THREE.SpotLight(0xD4AF37, 0.5); sp2.position.set(20, 25, 20); sp2.angle = Math.PI/6; sp2.penumbra = 0.5; scene.add(sp2);
 
-            const directionalLight = new THREE.DirectionalLight(0xffd700, 0.8);
-            directionalLight.position.set(10, 30, 10);
-            directionalLight.castShadow = true;
-            scene.add(directionalLight);
+            // Ground
+            const gc = document.createElement('canvas'); gc.width = 512; gc.height = 512;
+            const gctx = gc.getContext('2d'); gctx.fillStyle = '#2a2a2a'; gctx.fillRect(0,0,512,512);
+            for (let i = 0; i < 8000; i++) { const b = Math.floor(Math.random()*40)+20; gctx.fillStyle = `rgba(${b},${b},${b},${Math.random()*0.4})`; gctx.fillRect(Math.random()*512, Math.random()*512, Math.random()*2+1, Math.random()*2+1); }
+            for (let i = 0; i < 40; i++) { gctx.strokeStyle = 'rgba(10,10,10,0.6)'; gctx.lineWidth = 2; gctx.beginPath(); const sx=Math.random()*512, sy=Math.random()*512; gctx.moveTo(sx,sy); gctx.lineTo(sx+(Math.random()-0.5)*100, sy+(Math.random()-0.5)*100); gctx.stroke(); }
+            const gt = new THREE.CanvasTexture(gc); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(4,4);
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(80,80,30,30), new THREE.MeshStandardMaterial({ map: gt, roughness: 0.95, metalness: 0.05 }));
+            ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
 
-            createCity();
-            createPlayer();
-            setupControls();
-            animate();
+            // Streets
+            const sc = document.createElement('canvas'); sc.width = 256; sc.height = 256;
+            const sctx = sc.getContext('2d'); sctx.fillStyle = '#1a1a1a'; sctx.fillRect(0,0,256,256);
+            for (let i = 0; i < 3000; i++) { const b = Math.floor(Math.random()*30)+10; sctx.fillStyle = `rgba(${b},${b},${b},${Math.random()*0.5})`; sctx.fillRect(Math.random()*256, Math.random()*256, Math.random()*2, Math.random()*2); }
+            sctx.fillStyle = '#FFD700'; for (let i = 0; i < 256; i += 30) sctx.fillRect(120, i, 16, 20);
+            sctx.fillStyle = '#FFFFFF'; sctx.fillRect(10,0,4,256); sctx.fillRect(242,0,4,256);
+            const st = new THREE.CanvasTexture(sc); st.wrapS = st.wrapT = THREE.RepeatWrapping; st.repeat.set(1,6);
+            const streetMat = new THREE.MeshStandardMaterial({ map: st, roughness: 0.85 });
+            for (let i = -2; i <= 2; i++) { const s = new THREE.Mesh(new THREE.PlaneGeometry(80,4), streetMat); s.rotation.x = -Math.PI/2; s.position.set(0,0.02,i*15); s.receiveShadow = true; scene.add(s); }
+            for (let i = -2; i <= 2; i++) { const s = new THREE.Mesh(new THREE.PlaneGeometry(4,80), streetMat); s.rotation.x = -Math.PI/2; s.rotation.z = Math.PI/2; s.position.set(i*15,0.02,0); s.receiveShadow = true; scene.add(s); }
 
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
-
-        function loadCasinoModel() {
-            const loader = new THREE.GLTFLoader();
-            loader.load(
-                'https://cdn.jsdelivr.net/gh/Strawrfsa/famiglia-assets@main/harlem_casino.glb',
-                (gltf) => {
-                    casinoModel = gltf.scene;
-                    casinoModel.traverse((child) => {
-                        if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                        }
-                    });
-                    console.log('Casino loaded!');
-                },
-                undefined,
-                (error) => console.error('Casino load error:', error)
-            );
-        }
-
-        function createCity() {
-            // ORIGINAL GROUND TEXTURE
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = '#2a2a2a';
-            ctx.fillRect(0, 0, 512, 512);
-            
-            for (let i = 0; i < 8000; i++) {
-                const size = Math.random() * 2 + 1;
-                const brightness = Math.floor(Math.random() * 40) + 20;
-                ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, ${Math.random() * 0.4})`;
-                ctx.fillRect(Math.random() * 512, Math.random() * 512, size, size);
-            }
-            
-            ctx.strokeStyle = 'rgba(10, 10, 10, 0.6)';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 40; i++) {
-                ctx.beginPath();
-                const startX = Math.random() * 512;
-                const startY = Math.random() * 512;
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(startX + (Math.random() - 0.5) * 100, startY + (Math.random() - 0.5) * 100);
-                ctx.stroke();
-            }
-            
-            for (let i = 0; i < 100; i++) {
-                ctx.fillStyle = `rgba(15, 10, 5, ${Math.random() * 0.3})`;
-                ctx.beginPath();
-                ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 15, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            const groundTexture = new THREE.CanvasTexture(canvas);
-            groundTexture.wrapS = THREE.RepeatWrapping;
-            groundTexture.wrapT = THREE.RepeatWrapping;
-            groundTexture.repeat.set(4, 4);
-            
-            const ground = new THREE.Mesh(
-                new THREE.PlaneGeometry(80, 80, 30, 30),
-                new THREE.MeshStandardMaterial({ 
-                    map: groundTexture,
-                    roughness: 0.95,
-                    metalness: 0.05
-                })
-            );
-            ground.rotation.x = -Math.PI / 2;
-            ground.receiveShadow = true;
-            ground.name = 'ground';
-            scene.add(ground);
-
-            // STREETS
-            const streetCanvas = document.createElement('canvas');
-            streetCanvas.width = 256;
-            streetCanvas.height = 256;
-            const streetCtx = streetCanvas.getContext('2d');
-            
-            streetCtx.fillStyle = '#1a1a1a';
-            streetCtx.fillRect(0, 0, 256, 256);
-            
-            for (let i = 0; i < 3000; i++) {
-                const brightness = Math.floor(Math.random() * 30) + 10;
-                streetCtx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, ${Math.random() * 0.5})`;
-                streetCtx.fillRect(Math.random() * 256, Math.random() * 256, Math.random() * 2, Math.random() * 2);
-            }
-            
-            const streetTexture = new THREE.CanvasTexture(streetCanvas);
-            const streetMat = new THREE.MeshStandardMaterial({ map: streetTexture, roughness: 0.85 });
-            
-            for (let i = -2; i <= 2; i++) {
-                const street = new THREE.Mesh(new THREE.PlaneGeometry(80, 4), streetMat);
-                street.rotation.x = -Math.PI / 2;
-                street.position.set(0, 0.02, i * 15);
-                scene.add(street);
-            }
-
-            // LAMP POSTS
-            for (let x = -35; x <= 35; x += 18) {
-                for (let z = -35; z <= 35; z += 18) {
-                    if (Math.random() > 0.3) {
-                        const lamp = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.12, 0.18, 10, 8),
-                            new THREE.MeshStandardMaterial({ color: 0x2a2a2a })
-                        );
-                        lamp.position.set(x, 5, z);
-                        scene.add(lamp);
-
-                        const light = new THREE.PointLight(0xffd700, 1.5, 22);
-                        light.position.set(x, 10, z);
-                        scene.add(light);
-                    }
+            // Lamp posts
+            const lampMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.1 });
+            for (let x = -35; x <= 35; x += 18) for (let z = -35; z <= 35; z += 18) {
+                if (Math.random() > 0.3) {
+                    const lx = x+Math.random()*2, lz = z+Math.random()*2;
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.18,10,8), lampMat);
+                    post.position.set(lx,5,lz); post.castShadow = true; scene.add(post);
+                    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.4,0.3,8), new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 2.5, metalness: 0.8, roughness: 0.2 }));
+                    head.position.set(lx,10.2,lz); scene.add(head);
+                    const lt = new THREE.PointLight(0xffd700, 1.5, 22, 2); lt.position.copy(head.position); lt.castShadow = true; scene.add(lt);
                 }
             }
 
-            // CARS
-            const carColors = [0x8B0000, 0x000000, 0x2F4F4F, 0xC0C0C0];
+            // Decor (benches, trash, cars)
+            const wc = document.createElement('canvas'); wc.width = 64; wc.height = 64;
+            const wctx = wc.getContext('2d'); wctx.fillStyle = '#4a2511'; wctx.fillRect(0,0,64,64);
+            const woodMat = new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(wc), roughness: 0.9 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.7, roughness: 0.3 });
+            for (let i = 0; i < 8; i++) {
+                const bench = new THREE.Group();
+                bench.add(new THREE.Mesh(new THREE.BoxGeometry(2,0.2,0.6), woodMat));
+                const back = new THREE.Mesh(new THREE.BoxGeometry(2,0.8,0.1), woodMat); back.position.set(0,0.5,-0.25); bench.add(back);
+                bench.position.set((Math.random()-0.5)*70, 0.3, (Math.random()-0.5)*70); bench.rotation.y = Math.random()*Math.PI; scene.add(bench);
+            }
+            for (let i = 0; i < 10; i++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.35,0.8,8), metalMat); t.position.set((Math.random()-0.5)*70, 0.4, (Math.random()-0.5)*70); scene.add(t); }
+            const carColors = [0x8B0000, 0x000000, 0x2F4F4F, 0xC0C0C0, 0x4B0082];
             for (let i = 0; i < 6; i++) {
                 const car = new THREE.Group();
-                const carMat = new THREE.MeshStandardMaterial({ 
-                    color: carColors[Math.floor(Math.random() * carColors.length)],
-                    metalness: 0.95,
-                    roughness: 0.1
-                });
-                
-                const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 4), carMat);
-                body.position.y = 0.4;
-                car.add(body);
-                
-                const roof = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.7, 2.2), carMat);
-                roof.position.set(0, 1.15, -0.3);
-                car.add(roof);
-
-                car.position.set(
-                    (Math.random() - 0.5) * 70,
-                    0,
-                    (Math.random() - 0.5) * 70
-                );
-                car.rotation.y = Math.random() * Math.PI * 2;
-                scene.add(car);
+                const cm = new THREE.MeshStandardMaterial({ color: carColors[Math.floor(Math.random()*carColors.length)], metalness: 0.95, roughness: 0.1 });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.8,4), cm); body.position.y = 0.4; body.castShadow = true; car.add(body);
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(1.6,0.7,2.2), cm); roof.position.set(0,1.15,-0.3); car.add(roof);
+                const bump = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.2), new THREE.MeshStandardMaterial({ color: 0xCCCCCC, metalness: 1, roughness: 0 }));
+                bump.position.set(0,0.3,2.1); car.add(bump);
+                car.position.set((Math.random()-0.5)*70, 0, (Math.random()-0.5)*70); car.rotation.y = Math.random()*Math.PI*2; scene.add(car);
             }
-        }
 
-        function createPlayer() {
+            // Player
             player = new THREE.Group();
-            
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.4, 0.5, 1.2, 8),
-                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-            );
-            body.position.y = 0.6;
-            player.add(body);
-
-            const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 16, 16),
-                new THREE.MeshStandardMaterial({ color: 0xFFDBB5 })
-            );
-            head.position.y = 1.5;
-            player.add(head);
-
-            const hat = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.25, 0.3, 0.3, 16),
-                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-            );
-            hat.position.y = 1.85;
-            player.add(hat);
-
-            player.position.set(0, 0, 0);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6, metalness: 0.1 });
+            const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,1.2,8), bodyMat); bd.position.y = 0.6; bd.castShadow = true; player.add(bd);
+            const hd = new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16), new THREE.MeshStandardMaterial({ color: 0xFFDBB5, roughness: 0.8 })); hd.position.y = 1.5; player.add(hd);
+            const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.05,16), new THREE.MeshStandardMaterial({ color: 0x1a1a1a })); hatBrim.position.y = 1.65; player.add(hatBrim);
+            const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.3,0.3,16), new THREE.MeshStandardMaterial({ color: 0x1a1a1a })); hatTop.position.y = 1.85; player.add(hatTop);
+            const tie = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.5,0.05), new THREE.MeshStandardMaterial({ color: 0xD4AF37, emissive: 0xD4AF37, emissiveIntensity: 0.3, metalness: 0.8, roughness: 0.2 })); tie.position.set(0,0.8,0.42); player.add(tie);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+            const ll = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.8,8), legMat); ll.position.set(-0.15,0.4,0); player.add(ll);
+            const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.8,8), legMat); rl.position.set(0.15,0.4,0); player.add(rl);
+            const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, metalness: 0.7, roughness: 0.3 });
+            const ls = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.1,0.3), shoeMat); ls.position.set(-0.15,0,0.05); player.add(ls);
+            const rs = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.1,0.3), shoeMat); rs.position.set(0.15,0,0.05); player.add(rs);
             scene.add(player);
-        }
 
-        function buyBuilding(type) {
-            if (type === 'casino') {
-                if (playerMoney >= 25000) {
-                    if (!casinoModel) {
-                        alert('Casino model is still loading...');
-                        return;
-                    }
-                    placingMode = true;
-                    buildingToPlace = 'casino';
-                    document.getElementById('placingMode').style.display = 'block';
-                } else {
-                    alert('Not enough money! Need $25,000');
-                }
-            }
-        }
+            const marker = new THREE.Mesh(new THREE.RingGeometry(0.8,1.1,32), new THREE.MeshBasicMaterial({ color: 0xD4AF37, side: THREE.DoubleSide, transparent: true, opacity: 0.7 }));
+            marker.rotation.x = -Math.PI/2; marker.position.set(0,0.05,0); scene.add(marker); player.marker = marker;
+            const glow = new THREE.Mesh(new THREE.CircleGeometry(1.2,32), new THREE.MeshBasicMaterial({ color: 0xD4AF37, transparent: true, opacity: 0.2, side: THREE.DoubleSide }));
+            glow.rotation.x = -Math.PI/2; glow.position.set(0,0.03,0); scene.add(glow); player.glow = glow;
 
-        function setupControls() {
-            const canvas = document.getElementById('gameCanvas');
-            const raycaster = new THREE.Raycaster();
-            const mouse = new THREE.Vector2();
-
+            // Controls
+            const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
             canvas.addEventListener('click', (e) => {
-                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
+                if (!gameActive) return;
+                mouse.x = (e.clientX/innerWidth)*2-1; mouse.y = -(e.clientY/innerHeight)*2+1;
                 raycaster.setFromCamera(mouse, camera);
+                const gi = raycaster.intersectObjects(scene.children.filter(o => o.geometry && o.geometry.type === 'PlaneGeometry'));
+                if (gi.length > 0) { targetPosition = { x: gi[0].point.x, z: gi[0].point.z }; isMoving = true; }
+            });
 
-                if (placingMode) {
-                    const intersects = raycaster.intersectObjects(scene.children.filter(obj => obj.name === 'ground'));
-                    
-                    if (intersects.length > 0) {
-                        const point = intersects[0].point;
-                        placeBuilding(point.x, point.z);
-                    }
+            // Right click to place casino
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (!gameActive) return;
+                mouse.x = (e.clientX/innerWidth)*2-1; mouse.y = -(e.clientY/innerHeight)*2+1;
+                raycaster.setFromCamera(mouse, camera);
+                const gi = raycaster.intersectObjects(scene.children.filter(o => o.geometry && o.geometry.type === 'PlaneGeometry'));
+                if (gi.length > 0) {
+                    pendingPlacement = { x: gi[0].point.x, z: gi[0].point.z };
+                    document.getElementById('propertyShop').style.display = 'block';
                 }
             });
-        }
 
-        function placeBuilding(x, z) {
-            if (buildingToPlace === 'casino' && casinoModel) {
-                const building = casinoModel.clone();
-                building.position.set(x, 0, z);
-                building.scale.set(0.5, 0.5, 0.5); // SMALLER SCALE!
-                scene.add(building);
-                
-                buildings.push(building);
-                playerMoney -= 25000;
-                
-                document.getElementById('money').textContent = playerMoney.toLocaleString();
-                document.getElementById('buildingCount').textContent = buildings.length;
-                
-                placingMode = false;
-                buildingToPlace = null;
-                document.getElementById('placingMode').style.display = 'none';
-            }
-        }
+            // Animate
+            function animate() {
+                if (!gameActive) return;
+                requestAnimationFrame(animate);
+                const time = Date.now() * 0.001;
 
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            const time = Date.now() * 0.001;
-            if (player) {
-                player.position.y = Math.sin(time * 2) * 0.05;
+                if (isMoving && targetPosition) {
+                    const dx = targetPosition.x - player.position.x, dz = targetPosition.z - player.position.z;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    if (dist > 0.5) {
+                        player.position.x += (dx/dist)*0.2; player.position.z += (dz/dist)*0.2;
+                        player.marker.position.set(player.position.x, 0.05, player.position.z);
+                        player.glow.position.set(player.position.x, 0.03, player.position.z);
+                        player.rotation.y = Math.atan2(dx, dz);
+                        player.position.y = Math.sin(time*8)*0.1;
+                    } else { isMoving = false; player.position.y = 0; }
+                }
+
+                camera.position.x += (player.position.x - camera.position.x)*0.05;
+                camera.position.z += (player.position.z + 30 - camera.position.z)*0.05;
+                camera.lookAt(player.position.x, 0, player.position.z);
+
+                // Minimap
+                const mc = document.getElementById('minimap');
+                if (mc) {
+                    const ctx = mc.getContext('2d'), sz = 200, ms = 80;
+                    ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,sz,sz);
+                    ctx.strokeStyle = 'rgba(212,175,55,0.15)'; ctx.lineWidth = 1;
+                    for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(i/10*sz,0); ctx.lineTo(i/10*sz,sz); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i/10*sz); ctx.lineTo(sz,i/10*sz); ctx.stroke(); }
+                    placedCasinos.forEach(c => { const mx = ((c.pos.x+ms/2)/ms)*sz, my = ((c.pos.z+ms/2)/ms)*sz; ctx.fillStyle = '#D4AF37'; ctx.fillRect(mx-5,my-5,10,10); ctx.fillStyle = '#F5E6D3'; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText('🎰', mx, my+4); });
+                    const px = ((player.position.x+ms/2)/ms)*sz, py = ((player.position.z+ms/2)/ms)*sz;
+                    ctx.fillStyle = '#D4AF37'; ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#F5E6D3'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px,py,8,0,Math.PI*2); ctx.stroke();
+                    ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 3; ctx.strokeRect(0,0,sz,sz);
+                }
+
+                renderer.render(scene, camera);
             }
-            
-            renderer.render(scene, camera);
-        }
+            animate();
+
+            window.addEventListener('resize', () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+            // Income tick
+            setInterval(() => {
+                if (gameActive && placedCasinos.length > 0) {
+                    playerMoney += (placedCasinos.length * CASINO_INCOME) / 3600;
+                    updateUI();
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>

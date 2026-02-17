@@ -361,26 +361,43 @@
         const sky=new THREE.Mesh(skyGeo,skyMat);scene.add(sky);
 
         // === OUTER LANDSCAPE ===
-        // Matching ground outside (same style as playable area)
-        const outerGround=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x1c1c1c,roughness:.95,metalness:.05}));
-        outerGround.rotation.x=-Math.PI/2;outerGround.position.y=-.08;outerGround.name='g';scene.add(outerGround);
+        // Same ground TEXTURE as playable area (seamless)
+        const ogN=new THREE.Mesh(new THREE.PlaneGeometry(600,295),new THREE.MeshStandardMaterial({map:gt,roughness:.95,metalness:.05}));
+        ogN.rotation.x=-Math.PI/2;ogN.position.set(0,-.06,-150);ogN.name='g';scene.add(ogN);
+        const ogS=new THREE.Mesh(new THREE.PlaneGeometry(600,295),new THREE.MeshStandardMaterial({map:gt,roughness:.95,metalness:.05}));
+        ogS.rotation.x=-Math.PI/2;ogS.position.set(0,-.06,150);ogS.name='g';scene.add(ogS);
+
+        // Extended road (same texture as center street) going to horizon
+        const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(250,5),sm);
+        extRoadL.rotation.x=-Math.PI/2;extRoadL.position.set(-175,0,0);scene.add(extRoadL);
+        const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(250,5),sm);
+        extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(175,0,0);scene.add(extRoadR);
 
         // === CITY GLB MODELS ===
-        // city.glb: max 1.26 → scale 25 = ~30 units wide (smaller!)
-        // city2.glb: max 4.48 → scale 8 = ~35 units
         const CITY1_SCALE=25;
         const CITY2_SCALE=8;
+        function onRoad(z){return Math.abs(z)<6}
 
         loader.load(GLB_BASE+'city.glb',g=>{
             const positions=[
-                // North wall
-                {x:-30,z:-56,ry:0},{x:0,z:-56,ry:0},{x:30,z:-56,ry:0},
+                // North wall (z=-52, very close)
+                {x:-25,z:-52,ry:0},{x:0,z:-52,ry:0},{x:25,z:-52,ry:0},
                 // South wall
-                {x:-30,z:56,ry:Math.PI},{x:0,z:56,ry:Math.PI},{x:30,z:56,ry:Math.PI},
-                // West wall
-                {x:-56,z:-20,ry:Math.PI/2},{x:-56,z:10,ry:Math.PI/2},{x:-56,z:35,ry:Math.PI/2},
+                {x:-25,z:52,ry:Math.PI},{x:0,z:52,ry:Math.PI},{x:25,z:52,ry:Math.PI},
+                // West wall (skip road z~0)
+                {x:-52,z:-25,ry:Math.PI/2},{x:-52,z:-40,ry:Math.PI/2},
+                {x:-52,z:15,ry:Math.PI/2},{x:-52,z:35,ry:Math.PI/2},
                 // East wall
-                {x:56,z:-20,ry:-Math.PI/2},{x:56,z:10,ry:-Math.PI/2},{x:56,z:35,ry:-Math.PI/2}
+                {x:52,z:-25,ry:-Math.PI/2},{x:52,z:-40,ry:-Math.PI/2},
+                {x:52,z:15,ry:-Math.PI/2},{x:52,z:35,ry:-Math.PI/2},
+                // Along road sides further out
+                {x:-80,z:-10,ry:0},{x:-80,z:10,ry:Math.PI},
+                {x:-110,z:-10,ry:0},{x:-110,z:10,ry:Math.PI},
+                {x:80,z:-10,ry:0},{x:80,z:10,ry:Math.PI},
+                {x:110,z:-10,ry:0},{x:110,z:10,ry:Math.PI},
+                // Deeper rows
+                {x:-20,z:-70,ry:0},{x:20,z:-70,ry:0},
+                {x:-20,z:70,ry:Math.PI},{x:20,z:70,ry:Math.PI}
             ];
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(CITY1_SCALE,CITY1_SCALE,CITY1_SCALE);
@@ -389,32 +406,32 @@
                 scene.add(c)});
         },undefined,()=>{loadFallbackCity()});
 
-        // Far ring: city2.glb
         loader.load(GLB_BASE+'city2.glb',g=>{
-            for(let angle=0;angle<Math.PI*2;angle+=Math.PI/6){
-                const dist=90+Math.random()*30;
+            for(let angle=0;angle<Math.PI*2;angle+=Math.PI/5){
+                const dist=80+Math.random()*20;
+                const px=Math.cos(angle)*dist,pz=Math.sin(angle)*dist;
+                if(onRoad(pz)) continue;
                 const c=g.scene.clone();c.scale.set(CITY2_SCALE,CITY2_SCALE,CITY2_SCALE);
-                c.position.set(Math.cos(angle)*dist,0,Math.sin(angle)*dist);
-                c.rotation.y=angle+Math.PI;
+                c.position.set(px,0,pz);c.rotation.y=angle+Math.PI;
                 c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
                 scene.add(c)}
         });
 
-        // Fallback procedural buildings
         function loadFallbackCity(){
-            const brickColors=[0x3a1a1a,0x2a1515,0x1a1218,0x221a1a];
-            const winMat=new THREE.MeshBasicMaterial({color:0xffdd88,transparent:true});
+            const bC=[0x3a1a1a,0x2a1515,0x1a1218,0x221a1a];
+            const wM2=new THREE.MeshBasicMaterial({color:0xffdd88,transparent:true});
             function makeB(bx,bz,bw,bd,bh){
-                const mat=new THREE.MeshStandardMaterial({color:brickColors[~~(Math.random()*brickColors.length)],roughness:.9});
-                const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat);
+                if(onRoad(bz)) return;
+                const m=new THREE.MeshStandardMaterial({color:bC[~~(Math.random()*bC.length)],roughness:.9});
+                const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),m);
                 b.position.set(bx,bh/2,bz);scene.add(b);
                 for(let wy=2;wy<bh-1;wy+=3){for(let wx=-bw/2+1;wx<bw/2;wx+=2.5){
-                    if(Math.random()>.4){const w=winMat.clone();w.opacity=.2+Math.random()*.5;
-                        const wm=new THREE.Mesh(new THREE.PlaneGeometry(.8,1.2),w);
-                        wm.position.set(bx+wx,wy,bz+bd/2+.01);scene.add(wm)}}}
+                    if(Math.random()>.5){const w=wM2.clone();w.opacity=.2+Math.random()*.5;
+                        const wn=new THREE.Mesh(new THREE.PlaneGeometry(.8,1.2),w);
+                        wn.position.set(bx+wx,wy,bz+bd/2+.01);scene.add(wn)}}}
             }
-            for(let a=0;a<Math.PI*2;a+=.2){const d=56+Math.random()*8;makeB(Math.cos(a)*d,Math.sin(a)*d,4+Math.random()*5,4+Math.random()*5,6+Math.random()*12)}
-            for(let a=0;a<Math.PI*2;a+=.18){const d=80+Math.random()*30;makeB(Math.cos(a)*d,Math.sin(a)*d,5+Math.random()*6,4+Math.random()*5,8+Math.random()*15)}
+            for(let a=0;a<Math.PI*2;a+=.25){const d=52+Math.random()*6;makeB(Math.cos(a)*d,Math.sin(a)*d,4+Math.random()*4,4+Math.random()*4,6+Math.random()*10)}
+            for(let a=0;a<Math.PI*2;a+=.22){const d=75+Math.random()*20;makeB(Math.cos(a)*d,Math.sin(a)*d,5+Math.random()*5,4+Math.random()*4,8+Math.random()*12)}
         }
 
         // === TRAFFIC CARS (drive along CENTER HORIZONTAL street only, z=0) ===

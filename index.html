@@ -270,7 +270,7 @@
         if(money<PRICE){toast('NOT ENOUGH MONEY!');return}
         money-=PRICE;exitPlacement();
         loader.load(GLB_BASE+'harlem_casino.glb',g=>{
-            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.2,.2,.2);m.rotation.y=Math.PI;
+            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.6,.6,.6);m.rotation.y=Math.PI;
             m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
             scene.add(m);casinos.push({model:m,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
         },undefined,()=>{
@@ -373,15 +373,15 @@
 
         // === STATIC GLB CARS (parked around zone) ===
         // === CAR SCALES (measured) ===
-        // car2: max 181.93 → scale 0.022 ≈ 4 units
-        // car3: max 1327.19 → scale 0.003 ≈ 4 units
-        // car4: max 451.90 → scale 0.009 ≈ 4 units
+        // car2: max 181.93 → scale 0.066 ≈ 12 units
+        // car3: max 1327.19 → scale 0.009 ≈ 12 units
+        // car4: max 451.90 → scale 0.027 ≈ 12 units
         const carData=[
-            {file:'car2.glb',scale:0.022},
-            {file:'car3.glb',scale:0.003},
-            {file:'car4.glb',scale:0.009}
+            {file:'car2.glb',scale:0.066},
+            {file:'car3.glb',scale:0.009},
+            {file:'car4.glb',scale:0.027}
         ];
-        function onStreet(x,z){for(let i=-2;i<=2;i++){if(Math.abs(z-i*16)<3.5)return true;if(Math.abs(x-i*16)<3.5)return true}return false}
+        function onStreet(x,z){return Math.abs(z)<3.5}
 
         // 3 cars INSIDE playable zone (1 of each model, avoid streets)
         const innerSpots=[];
@@ -459,19 +459,30 @@
         for(let i=0;i<25;i++){gx.beginPath();let cx=Math.random()*1024,cy=Math.random()*1024;gx.moveTo(cx,cy);for(let j=0;j<4;j++){cx+=(Math.random()-.5)*50;cy+=(Math.random()-.5)*50;gx.lineTo(cx,cy)}gx.stroke()}
         for(let i=0;i<15;i++){gx.fillStyle=`rgba(8,6,4,${Math.random()*.2+.05})`;gx.beginPath();gx.ellipse(Math.random()*1024,Math.random()*1024,Math.random()*20+5,Math.random()*15+5,Math.random()*Math.PI,0,Math.PI*2);gx.fill()}
         const gt=new THREE.CanvasTexture(gc);gt.wrapS=gt.wrapT=THREE.RepeatWrapping;gt.repeat.set(4,4);
-        const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({map:gt,roughness:.95,metalness:.05}));
-        ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.name='g';scene.add(ground);
+        const groundMat=new THREE.MeshStandardMaterial({map:gt,roughness:.95,metalness:.05});
+        // Split ground into two halves to avoid z-fighting with street
+        const groundTop=new THREE.Mesh(new THREE.PlaneGeometry(100,47.5),groundMat);
+        groundTop.rotation.x=-Math.PI/2;groundTop.position.set(0,0,26.25);groundTop.receiveShadow=true;groundTop.name='g';scene.add(groundTop);
+        const groundBot=new THREE.Mesh(new THREE.PlaneGeometry(100,47.5),groundMat);
+        groundBot.rotation.x=-Math.PI/2;groundBot.position.set(0,0,-26.25);groundBot.receiveShadow=true;groundBot.name='g';scene.add(groundBot);
 
-        // === STREETS ===
-        const sc=document.createElement('canvas');sc.width=256;sc.height=256;const sx=sc.getContext('2d');
-        sx.fillStyle='#0f0f0f';sx.fillRect(0,0,256,256);
-        for(let i=0;i<4000;i++){const b=~~(Math.random()*22)+6;sx.fillStyle=`rgba(${b},${b},${b},${Math.random()*.5})`;sx.fillRect(Math.random()*256,Math.random()*256,Math.random()*2,Math.random()*2)}
-        sx.fillStyle='#FFD700';for(let i=0;i<256;i+=32){sx.fillRect(118,i,10,18);sx.fillRect(128,i,10,18)}
-        sx.fillStyle='#FFF';sx.globalAlpha=.6;sx.fillRect(8,0,3,256);sx.fillRect(245,0,3,256);sx.globalAlpha=1;
-        const st=new THREE.CanvasTexture(sc);st.wrapS=st.wrapT=THREE.RepeatWrapping;st.repeat.set(1,7);
-        const sm=new THREE.MeshStandardMaterial({map:st,roughness:.85});
-        for(let i=-2;i<=2;i++){const s=new THREE.Mesh(new THREE.PlaneGeometry(100,5),sm);s.rotation.x=-Math.PI/2;s.position.set(0,.02,i*16);s.receiveShadow=true;s.name='g';scene.add(s)}
-        for(let i=-2;i<=2;i++){const s=new THREE.Mesh(new THREE.PlaneGeometry(5,100),sm);s.rotation.x=-Math.PI/2;s.rotation.z=Math.PI/2;s.position.set(i*16,.02,0);s.receiveShadow=true;s.name='g';scene.add(s)}
+        // === STREETS (center horizontal only) ===
+        const sc=document.createElement('canvas');sc.width=512;sc.height=128;const sx=sc.getContext('2d');
+        // Asphalt base
+        sx.fillStyle='#141414';sx.fillRect(0,0,512,128);
+        // Grain
+        for(let i=0;i<8000;i++){const b=~~(Math.random()*20)+8;sx.fillStyle=`rgba(${b},${b},${b},${Math.random()*.4})`;sx.fillRect(Math.random()*512,Math.random()*128,Math.random()*2+.5,Math.random()*2+.5)}
+        // Center yellow dashed line
+        sx.fillStyle='#DAA520';
+        for(let i=0;i<512;i+=40){sx.fillRect(i,60,25,4);sx.fillRect(i,64,25,4)}
+        // White edge lines
+        sx.fillStyle='rgba(255,255,255,.5)';
+        sx.fillRect(0,4,512,2);sx.fillRect(0,122,512,2);
+        const st=new THREE.CanvasTexture(sc);st.wrapS=st.wrapT=THREE.RepeatWrapping;st.repeat.set(8,1);
+        const sm=new THREE.MeshStandardMaterial({map:st,roughness:.9,metalness:.05});
+        const centerStreet=new THREE.Mesh(new THREE.PlaneGeometry(100,5),sm);
+        centerStreet.rotation.x=-Math.PI/2;centerStreet.position.set(0,0,0);
+        centerStreet.receiveShadow=true;centerStreet.name='g';scene.add(centerStreet);
 
         // === LAMP POSTS (visual only, NO extra lights — using emissive heads) ===
         const lpM=new THREE.MeshStandardMaterial({color:0x222,metalness:.9,roughness:.1});
@@ -596,8 +607,7 @@
                 ctx.strokeStyle='rgba(212,175,55,.06)';ctx.lineWidth=1;
                 for(let i=0;i<=10;i++){const v=i/10*sz;ctx.beginPath();ctx.moveTo(v,0);ctx.lineTo(v,sz);ctx.stroke();ctx.beginPath();ctx.moveTo(0,v);ctx.lineTo(sz,v);ctx.stroke()}
                 ctx.strokeStyle='rgba(80,80,80,.25)';ctx.lineWidth=2;
-                for(let i=-2;i<=2;i++){const y=((i*16+ms/2)/ms)*sz;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(sz,y);ctx.stroke();
-                    const x=((i*16+ms/2)/ms)*sz;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,sz);ctx.stroke()}
+                const cy=((0+ms/2)/ms)*sz;ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(sz,cy);ctx.stroke();
                 casinos.forEach(c=>{const mx=((c.pos.x+ms/2)/ms)*sz,my=((c.pos.z+ms/2)/ms)*sz;
                     const gr=ctx.createRadialGradient(mx,my,0,mx,my,10);gr.addColorStop(0,'rgba(212,175,55,.35)');gr.addColorStop(1,'transparent');
                     ctx.fillStyle=gr;ctx.fillRect(mx-10,my-10,20,20);ctx.fillStyle='#D4AF37';ctx.fillRect(mx-3,my-3,6,6);

@@ -405,37 +405,41 @@
         // Only center street (z=0, width 5 + margin)
         function onStreet(x,z){return Math.abs(z)<4.5}
 
-        // BARRICADE cars around boundary (±46), evenly spaced
+        // BOUNDARY: city.glb buildings marking the zone edges (replaces car barricade)
         const BOUND=46;
-        const barricadeSpots=[];
-        // Top and bottom edges only (not corners)
-        for(let x=-BOUND+4;x<=BOUND-4;x+=8){
-            barricadeSpots.push({x, z:-BOUND, ry:Math.PI/2});
-            barricadeSpots.push({x, z:BOUND, ry:Math.PI/2});
-        }
-        // Left and right edges only (not corners, skip road area)
-        for(let z=-BOUND+4;z<=BOUND-4;z+=8){
-            if(Math.abs(z)<5) continue; // skip road
-            barricadeSpots.push({x:-BOUND, z, ry:0});
-            barricadeSpots.push({x:BOUND, z, ry:0});
-        }
+        loader.load(GLB_BASE+'city.glb',g=>{
+            // city.glb max=1.26, scale 20 → ~25 units wide
+            const bScale=20;
+            const positions=[];
+            // North edge
+            for(let x=-40;x<=40;x+=26){positions.push({x,z:-BOUND,ry:Math.PI})}
+            // South edge
+            for(let x=-40;x<=40;x+=26){positions.push({x,z:BOUND,ry:0})}
+            // West edge (skip road |z|<5)
+            for(let z=-40;z<=40;z+=26){if(Math.abs(z)<5)continue;positions.push({x:-BOUND,z,ry:-Math.PI/2})}
+            // East edge (skip road |z|<5)
+            for(let z=-40;z<=40;z+=26){if(Math.abs(z)<5)continue;positions.push({x:BOUND,z,ry:Math.PI/2})}
+            positions.forEach(p=>{
+                const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
+                c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
+                c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
+                scene.add(c)});
+        });
 
-        // Load and place barricade cars only (no cars inside zone)
+        // 6 STATIC CARS parked outside zone (2 of each model)
         carData.forEach((cd,idx)=>{
             loader.load(GLB_BASE+cd.file,g=>{
-                barricadeSpots.filter((_,i)=>i%3===idx).forEach(p=>{
+                const spots=[
+                    {x:-60,z:20,ry:0},{x:60,z:-20,ry:Math.PI},
+                    {x:-20,z:-60,ry:Math.PI/2},{x:20,z:60,ry:-Math.PI/2},
+                    {x:-55,z:-55,ry:Math.PI/4},{x:55,z:55,ry:-Math.PI/4}
+                ];
+                spots.filter((_,i)=>i%3===idx).forEach(p=>{
                     const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
                     car.scale.set(cd.scale,cd.scale,cd.scale);
                     car.traverse(c=>{if(c.isMesh){c.castShadow=false;c.receiveShadow=false}});
                     scene.add(car);
                 });
-            },undefined,()=>{
-                const cm=trafficMat[idx%trafficMat.length];
-                barricadeSpots.filter((_,i)=>i%3===idx).forEach(p=>{
-                    const c=new THREE.Group();
-                    c.add(M(new THREE.BoxGeometry(1.8,.7,4),cm,0,.4,0,true));
-                    c.add(M(new THREE.BoxGeometry(1.5,.55,1.8),cm,0,1,-.3));
-                    c.position.set(p.x,0,p.z);c.rotation.y=p.ry;scene.add(c)});
             });
         });
 
@@ -497,17 +501,17 @@
         const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(250,5),sm.clone());
         extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(175,0,0);scene.add(extRoadR);
 
-        // === CITY BUILDINGS (few, far from zone) ===
+        // === CITY BUILDINGS (behind boundary buildings) ===
         const CITY1_SCALE=20;
         const CITY2_SCALE=6;
         loader.load(GLB_BASE+'city.glb',g=>{
-            // Only 1 row on each side, far out at ±100
             const positions=[];
-            for(let x=-50;x<=50;x+=35){positions.push({x,z:-100,ry:Math.PI});positions.push({x,z:100,ry:0})}
-            for(let z=-35;z<=35;z+=35){if(Math.abs(z)<12)continue;positions.push({x:-100,z,ry:-Math.PI/2});positions.push({x:100,z,ry:Math.PI/2})}
-            // Along road far sides
-            for(let x=-130;x<=-100;x+=35){positions.push({x,z:-14,ry:Math.PI});positions.push({x,z:14,ry:0})}
-            for(let x=100;x<=130;x+=35){positions.push({x,z:-14,ry:Math.PI});positions.push({x,z:14,ry:0})}
+            // Second row behind boundary (~70)
+            for(let x=-50;x<=50;x+=30){positions.push({x,z:-70,ry:Math.PI});positions.push({x,z:70,ry:0})}
+            for(let z=-35;z<=35;z+=30){if(Math.abs(z)<8)continue;positions.push({x:-70,z,ry:-Math.PI/2});positions.push({x:70,z,ry:Math.PI/2})}
+            // Along road outside
+            positions.push({x:-70,z:-10,ry:Math.PI});positions.push({x:-70,z:10,ry:0});
+            positions.push({x:70,z:-10,ry:Math.PI});positions.push({x:70,z:10,ry:0});
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(CITY1_SCALE,CITY1_SCALE,CITY1_SCALE);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -515,10 +519,10 @@
                 scene.add(c)});
         });
         loader.load(GLB_BASE+'city2.glb',g=>{
-            // Closer behind city1 row
             const positions=[];
-            for(let x=-40;x<=40;x+=50){positions.push({x,z:-120,ry:Math.PI});positions.push({x,z:120,ry:0})}
-            for(let z=-40;z<=40;z+=50){if(Math.abs(z)<14)continue;positions.push({x:-120,z,ry:-Math.PI/2});positions.push({x:120,z,ry:Math.PI/2})}
+            // Third row further back (~90)
+            for(let x=-40;x<=40;x+=45){positions.push({x,z:-90,ry:Math.PI});positions.push({x,z:90,ry:0})}
+            for(let z=-40;z<=40;z+=45){if(Math.abs(z)<10)continue;positions.push({x:-90,z,ry:-Math.PI/2});positions.push({x:90,z,ry:Math.PI/2})}
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(CITY2_SCALE,CITY2_SCALE,CITY2_SCALE);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;

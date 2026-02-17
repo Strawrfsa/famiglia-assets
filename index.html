@@ -396,26 +396,26 @@
         function onStreet(x,z){return Math.abs(z)<4.5}
 
         // ============================================================
-        // === BOUNDARY BUILDINGS (city.glb) - WALL AT MOVEMENT EDGE ===
+        // === BOUNDARY BUILDINGS — WALL OUTSIDE ±44 ZONE ===
         // ============================================================
-        // PLIM=44. Buildings positioned so their INNER FACE is at ~±45.
-        // Position ±58, scale 14 → inner face at ~±44-45 = wall effect.
-        // Wide road gap (±12) so buildings don't block the road.
+        // city.glb model extends ~20 units inward from its center.
+        // Centers at ±72 → inner face at ~±52 → safely outside PLIM=44.
+        // Scale 18, spacing 8 for dense imposing wall.
         const BOUND=46;
         loader.load(GLB_BASE+'city.glb',g=>{
-            const bScale=14;
+            const bScale=18;
             const positions=[];
-            // North wall (z = -58) — dense, every 10 units
-            for(let x=-55;x<=55;x+=10){positions.push({x,z:-58,ry:Math.PI})}
-            // South wall (z = +58)
-            for(let x=-55;x<=55;x+=10){positions.push({x,z:58,ry:0})}
-            // West wall (x = -58) — skip road gap ±12
-            for(let z=-55;z<=55;z+=10){if(Math.abs(z)<12)continue;positions.push({x:-58,z,ry:-Math.PI/2})}
-            // East wall (x = +58)
-            for(let z=-55;z<=55;z+=10){if(Math.abs(z)<12)continue;positions.push({x:58,z,ry:Math.PI/2})}
-            // Corner fills (diagonal)
-            [{x:-58,z:-58,ry:-Math.PI/4},{x:58,z:-58,ry:Math.PI/4},
-             {x:-58,z:58,ry:-Math.PI*3/4},{x:58,z:58,ry:Math.PI*3/4}].forEach(p=>positions.push(p));
+            // North wall (z = -72) — dense row
+            for(let x=-60;x<=60;x+=8){positions.push({x,z:-72,ry:Math.PI})}
+            // South wall (z = +72)
+            for(let x=-60;x<=60;x+=8){positions.push({x,z:72,ry:0})}
+            // West wall (x = -72) — skip road gap ±14
+            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-72,z,ry:-Math.PI/2})}
+            // East wall (x = +72)
+            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:72,z,ry:Math.PI/2})}
+            // Corner fills
+            [{x:-72,z:-72,ry:-Math.PI/4},{x:72,z:-72,ry:Math.PI/4},
+             {x:-72,z:72,ry:-Math.PI*3/4},{x:72,z:72,ry:Math.PI*3/4}].forEach(p=>positions.push(p));
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -426,7 +426,7 @@
         // 6 STATIC CARS parked along background roads
         carData.forEach((cd,idx)=>{
             loader.load(GLB_BASE+cd.file,g=>{
-                [{x:-70,z:20,ry:0},{x:70,z:-20,ry:Math.PI},{x:-20,z:-70,ry:Math.PI/2},{x:20,z:70,ry:-Math.PI/2},{x:-70,z:-30,ry:.3},{x:70,z:30,ry:-.3}]
+                [{x:-85,z:20,ry:0},{x:85,z:-20,ry:Math.PI},{x:-20,z:-85,ry:Math.PI/2},{x:20,z:85,ry:-Math.PI/2},{x:-85,z:-30,ry:.3},{x:85,z:30,ry:-.3}]
                 .filter((_,i)=>i%3===idx).forEach(p=>{
                     const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
                     car.scale.set(cd.scale,cd.scale,cd.scale);
@@ -517,30 +517,30 @@
         centerStreet.rotation.x=-Math.PI/2;centerStreet.position.set(0,.02,0);
         centerStreet.receiveShadow=true;centerStreet.name='g';scene.add(centerStreet);
 
-        // === BACKGROUND ROADS (behind buildings at ±68, NOT through playable zone) ===
-        const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(160,6),sm.clone());
-        bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-68);scene.add(bgRoadN);
-        const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(160,6),sm.clone());
-        bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,68);scene.add(bgRoadS);
+        // === BACKGROUND ROADS (behind buildings at ±82) ===
+        const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(180,6),sm.clone());
+        bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-82);scene.add(bgRoadN);
+        const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(180,6),sm.clone());
+        bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,82);scene.add(bgRoadS);
         const bgSmV=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
-        const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(6,160),bgSmV);
-        bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-68,.01,0);scene.add(bgRoadW);
-        const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(6,160),bgSmV.clone());
-        bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(68,.01,0);scene.add(bgRoadE);
+        const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(6,180),bgSmV);
+        bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-82,.01,0);scene.add(bgRoadW);
+        const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(6,180),bgSmV.clone());
+        bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(82,.01,0);scene.add(bgRoadE);
         // Extended center road through road gap
         const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
         extRoadL.rotation.x=-Math.PI/2;extRoadL.position.set(-145,.01,0);scene.add(extRoadL);
         const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
         extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoadR);
 
-        // === CITY2 BUILDINGS (behind boundary + bg roads) ===
+        // === CITY2 BUILDINGS (far behind boundary) ===
         loader.load(GLB_BASE+'city2.glb',g=>{
-            const sc=8;
+            const sc=9;
             const positions=[
-                {x:-45,z:-85,ry:Math.PI},{x:-15,z:-85,ry:Math.PI},{x:15,z:-85,ry:Math.PI},{x:45,z:-85,ry:Math.PI},
-                {x:-45,z:85,ry:0},{x:-15,z:85,ry:0},{x:15,z:85,ry:0},{x:45,z:85,ry:0},
-                {x:-85,z:-40,ry:-Math.PI/2},{x:-85,z:0,ry:-Math.PI/2},{x:-85,z:40,ry:-Math.PI/2},
-                {x:85,z:-40,ry:Math.PI/2},{x:85,z:0,ry:Math.PI/2},{x:85,z:40,ry:Math.PI/2}
+                {x:-50,z:-100,ry:Math.PI},{x:-20,z:-100,ry:Math.PI},{x:10,z:-100,ry:Math.PI},{x:40,z:-100,ry:Math.PI},
+                {x:-50,z:100,ry:0},{x:-20,z:100,ry:0},{x:10,z:100,ry:0},{x:40,z:100,ry:0},
+                {x:-100,z:-45,ry:-Math.PI/2},{x:-100,z:0,ry:-Math.PI/2},{x:-100,z:45,ry:-Math.PI/2},
+                {x:100,z:-45,ry:Math.PI/2},{x:100,z:0,ry:Math.PI/2},{x:100,z:45,ry:Math.PI/2}
             ];
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(sc,sc,sc);
@@ -563,7 +563,7 @@
             hy.position.set(hx,0,hz);scene.add(hy);
         });
         // FIRE HYDRANTS — outside zone
-        [[-50,-68],[50,-68],[-50,68],[50,68],[-68,-30],[-68,30],[68,-30],[68,30]].forEach(([hx,hz])=>{
+        [[-50,-82],[50,-82],[-50,82],[50,82],[-82,-30],[-82,30],[82,-30],[82,30]].forEach(([hx,hz])=>{
             const hy=new THREE.Group();
             hy.add(M(new THREE.CylinderGeometry(.2,.25,.9,8),redMat,0,.45,0));
             hy.add(M(new THREE.SphereGeometry(.22,8,8),redMat,0,.95,0));
@@ -581,7 +581,7 @@
             d.position.set(dx,0,dz);d.rotation.y=Math.random()*.3;scene.add(d);
         });
         // DUMPSTERS — outside
-        [[-72,20],[72,-25],[-30,-72],[25,72],[-72,-40],[72,35]].forEach(([dx,dz])=>{
+        [[-86,20],[86,-25],[-30,-86],[25,86],[-86,-40],[86,35]].forEach(([dx,dz])=>{
             const d=new THREE.Group();
             d.add(M(new THREE.BoxGeometry(2,1.5,1.2),dumpMat,0,.75,0));
             d.add(M(new THREE.BoxGeometry(2.1,.08,1.3),metalDark,0,1.52,0));
@@ -597,7 +597,7 @@
             t.position.set(tx,0,tz);scene.add(t);
         });
         // TRASH CANS — outside
-        [[-30,-68],[0,-68],[30,-68],[-30,68],[0,68],[30,68],[-68,-15],[68,15]].forEach(([tx,tz])=>{
+        [[-30,-82],[0,-82],[30,-82],[-30,82],[0,82],[30,82],[-82,-15],[82,15]].forEach(([tx,tz])=>{
             const t=new THREE.Group();
             t.add(M(new THREE.CylinderGeometry(.25,.3,.7,8),trashMat,0,.35,0));
             t.add(M(new THREE.CylinderGeometry(.28,.28,.05,8),metalDark,0,.72,0));
@@ -607,7 +607,7 @@
         // MANHOLES — on ALL streets
         const manholeMat=new THREE.MeshStandardMaterial({color:0x222,metalness:.8,roughness:.3});
         const manholeRing=new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:.9,roughness:.2});
-        [[-20,0],[20,0],[0,0],[-40,0],[40,0],[-20,-68],[20,-68],[-20,68],[20,68],[-68,-20],[-68,20],[68,-20],[68,20]].forEach(([mx,mz])=>{
+        [[-20,0],[20,0],[0,0],[-40,0],[40,0],[-20,-82],[20,-82],[-20,82],[20,82],[-82,-20],[-82,20],[82,-20],[82,20]].forEach(([mx,mz])=>{
             const mh=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.04,16),manholeMat);
             mh.position.set(mx,.03,mz);scene.add(mh);
             const ring=new THREE.Mesh(new THREE.RingGeometry(.35,.5,16),manholeRing);
@@ -621,7 +621,7 @@
             p.rotation.x=-Math.PI/2;p.position.set(px,.02,pz);scene.add(p);
         });
         // PUDDLES — outside
-        [[-55,-72,2.5],[60,72,1.8],[-72,10,2],[72,-15,1.5]].forEach(([px,pz,pr])=>{
+        [[-55,-86,2.5],[60,86,1.8],[-86,10,2],[86,-15,1.5]].forEach(([px,pz,pr])=>{
             const p=new THREE.Mesh(new THREE.CircleGeometry(pr,16),puddleMat);
             p.rotation.x=-Math.PI/2;p.position.set(px,.02,pz);scene.add(p);
         });
@@ -636,7 +636,7 @@
                 c2.position.set(cx+.1,1.7,cz-.1);c2.rotation.y=.3;c2.castShadow=true;scene.add(c2)}
         });
         // CRATES — outside
-        [[-72,40],[72,-35],[-40,-72],[35,72],[-75,0],[75,10]].forEach(([cx,cz])=>{
+        [[-86,40],[86,-35],[-40,-86],[35,86],[-88,0],[88,10]].forEach(([cx,cz])=>{
             const c=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.4,1.4),crateMat);
             c.position.set(cx,.7,cz);c.rotation.y=Math.random()*1;c.castShadow=true;scene.add(c);
             const c2=new THREE.Mesh(new THREE.BoxGeometry(1.1,1.1,1.1),crateMat);
@@ -650,7 +650,7 @@
             scene.add(M(new THREE.CylinderGeometry(.46,.46,.05,10),metalDark,bx,.7,bz));
         });
         // BARRELS — outside (some tipped over)
-        [[-65,-50],[65,45],[-45,72],[40,-72],[72,0],[-72,-10]].forEach(([bx,bz])=>{
+        [[-80,-50],[80,45],[-45,86],[40,-86],[86,0],[-86,-10]].forEach(([bx,bz])=>{
             const b=new THREE.Mesh(new THREE.CylinderGeometry(.4,.45,.9,10),barrelMat);
             b.position.set(bx,.45,bz);b.castShadow=true;scene.add(b);
             scene.add(M(new THREE.CylinderGeometry(.46,.46,.05,10),metalDark,bx,.2,bz));
@@ -668,7 +668,7 @@
             n.position.set(nx,0,nz);scene.add(n);
         });
         // NEWSPAPER STANDS — outside
-        [[-55,-68],[40,-68],[-68,15],[68,-25]].forEach(([nx,nz])=>{
+        [[-55,-82],[40,-82],[-82,15],[82,-25]].forEach(([nx,nz])=>{
             const n=new THREE.Group();
             n.add(M(new THREE.BoxGeometry(.8,1.2,.5),newsMat,0,.6,0));
             n.add(M(new THREE.BoxGeometry(.85,.05,.55),metalDark,0,1.22,0));
@@ -686,7 +686,7 @@
             booth.position.set(bx,0,bz);scene.add(booth);
         });
         // PHONE BOOTHS — outside
-        [[-68,-45],[68,40],[-20,-72],[25,72]].forEach(([bx,bz])=>{
+        [[-82,-45],[82,40],[-20,-86],[25,86]].forEach(([bx,bz])=>{
             const booth=new THREE.Group();
             booth.add(M(new THREE.BoxGeometry(1,2.5,1),boothMat,0,1.25,0));
             booth.add(M(new THREE.BoxGeometry(1.05,.1,1.05),metalDark,0,2.55,0));
@@ -699,7 +699,7 @@
         const tlGreen=new THREE.MeshStandardMaterial({color:0x00cc00,emissive:0x00cc00,emissiveIntensity:.8});
         const tlRed2=new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:.5});
         const tlYellow=new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0xffcc00,emissiveIntensity:.3});
-        [[-68,-68],[68,-68],[-68,68],[68,68],[-58,0],[58,0]].forEach(([tlx,tlz])=>{
+        [[-82,-82],[82,-82],[-82,82],[82,82],[-72,0],[72,0]].forEach(([tlx,tlz])=>{
             const tl=new THREE.Group();
             tl.add(M(new THREE.CylinderGeometry(.08,.1,5,6),tlPole,0,2.5,0));
             const box=new THREE.Group();
@@ -713,7 +713,7 @@
 
         // UTILITY POLES (far outside)
         const poleMat=new THREE.MeshStandardMaterial({color:0x3a2a15,roughness:.9});
-        [[-80,-40],[-80,0],[-80,40],[80,-40],[80,0],[80,40],[0,-80],[0,80]].forEach(([px,pz])=>{
+        [[-95,-40],[-95,0],[-95,40],[95,-40],[95,0],[95,40],[0,-95],[0,95]].forEach(([px,pz])=>{
             const pole=new THREE.Group();
             pole.add(M(new THREE.CylinderGeometry(.12,.18,10,6),poleMat,0,5,0));
             pole.add(M(new THREE.BoxGeometry(3,.12,.12),poleMat,0,9.5,0));

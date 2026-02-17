@@ -270,7 +270,7 @@
         if(money<PRICE){toast('NOT ENOUGH MONEY!');return}
         money-=PRICE;exitPlacement();
         loader.load(GLB_BASE+'harlem_casino.glb',g=>{
-            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.6,.6,.6);m.rotation.y=Math.PI;
+            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.35,.35,.35);m.rotation.y=Math.PI;
             m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
             scene.add(m);casinos.push({model:m,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
         },undefined,()=>{
@@ -373,34 +373,35 @@
 
         // === STATIC GLB CARS (parked around zone) ===
         // === CAR SCALES (measured) ===
-        // car2: max 181.93 → scale 0.066 ≈ 12 units
+        // car2: max 181.93 → scale 0.033 ≈ 6 units (was too big)
         // car3: max 1327.19 → scale 0.009 ≈ 12 units
         // car4: max 451.90 → scale 0.027 ≈ 12 units
         const carData=[
-            {file:'car2.glb',scale:0.066},
+            {file:'car2.glb',scale:0.033},
             {file:'car3.glb',scale:0.009},
             {file:'car4.glb',scale:0.027}
         ];
-        function onStreet(x,z){return Math.abs(z)<3.5}
+        // Only center street (z=0, width 5 + margin)
+        function onStreet(x,z){return Math.abs(z)<4.5}
 
-        // 3 cars INSIDE playable zone (1 of each model, avoid streets)
+        // 3 cars INSIDE playable zone, NOT on road
         const innerSpots=[];
         while(innerSpots.length<3){
             const x=(Math.random()-.5)*70,z=(Math.random()-.5)*70;
-            if(!onStreet(x,z)&&Math.abs(x)<40&&Math.abs(z)<40) innerSpots.push({x,z,ry:Math.random()*Math.PI*2})}
+            if(!onStreet(x,z)&&Math.abs(x)<40&&Math.abs(z)<40&&Math.abs(z)>6) innerSpots.push({x,z,ry:Math.random()*Math.PI*2})}
 
-        // BARRICADE cars around boundary (±46), tightly packed
+        // BARRICADE cars around boundary (±46), evenly spaced
         const BOUND=46;
         const barricadeSpots=[];
-        // Top and bottom edges
-        for(let x=-BOUND;x<=BOUND;x+=5){
-            barricadeSpots.push({x:x+(Math.random()-.5)*1.5, z:-BOUND+(Math.random()-.5)*2, ry:Math.PI/2+(Math.random()-.5)*.3});
-            barricadeSpots.push({x:x+(Math.random()-.5)*1.5, z:BOUND+(Math.random()-.5)*2, ry:Math.PI/2+(Math.random()-.5)*.3});
+        // Top and bottom edges (cars perpendicular to edge)
+        for(let x=-BOUND;x<=BOUND;x+=6){
+            barricadeSpots.push({x, z:-BOUND, ry:Math.PI/2});
+            barricadeSpots.push({x, z:BOUND, ry:Math.PI/2});
         }
-        // Left and right edges
-        for(let z=-BOUND;z<=BOUND;z+=5){
-            barricadeSpots.push({x:-BOUND+(Math.random()-.5)*2, z:z+(Math.random()-.5)*1.5, ry:(Math.random()-.5)*.3});
-            barricadeSpots.push({x:BOUND+(Math.random()-.5)*2, z:z+(Math.random()-.5)*1.5, ry:(Math.random()-.5)*.3});
+        // Left and right edges (cars parallel to edge)
+        for(let z=-BOUND;z<=BOUND;z+=6){
+            barricadeSpots.push({x:-BOUND, z, ry:0});
+            barricadeSpots.push({x:BOUND, z, ry:0});
         }
 
         // Load and place all cars
@@ -484,29 +485,42 @@
         centerStreet.rotation.x=-Math.PI/2;centerStreet.position.set(0,0,0);
         centerStreet.receiveShadow=true;centerStreet.name='g';scene.add(centerStreet);
 
-        // === LAMP POSTS (visual only, NO extra lights — using emissive heads) ===
+        // === LAMP POSTS (evenly spaced grid, always placed) ===
         const lpM=new THREE.MeshStandardMaterial({color:0x222,metalness:.9,roughness:.1});
         const lhM=new THREE.MeshStandardMaterial({color:0xffd700,emissive:0xffd700,emissiveIntensity:6});
-        // Only add 2 actual PointLights for key areas, rest are emissive-only
         let lightCount=0;
-        for(let x=-40;x<=40;x+=16)for(let z=-40;z<=40;z+=16){
-            if(Math.random()>.4){
-                const lx=x+(Math.random()-.5)*4,lz=z+(Math.random()-.5)*4;
-                const p=new THREE.Mesh(new THREE.CylinderGeometry(.08,.14,9,6),lpM);p.position.set(lx,4.5,lz);p.castShadow=true;scene.add(p);
-                const arm=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.5,4),lpM);arm.rotation.z=Math.PI/2;arm.position.set(lx+.6,8.8,lz);scene.add(arm);
-                const h=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),lhM);h.position.set(lx+1.2,8.8,lz);scene.add(h);
-                // Only first 4 lamps get real lights
-                if(lightCount<6){const lt=new THREE.PointLight(0xffd080,1,25,2);lt.position.set(lx+1.2,8.5,lz);scene.add(lt);lightCount++}
-            }}
+        for(let x=-40;x<=40;x+=20)for(let z=-40;z<=40;z+=20){
+            if(onStreet(x,z)) continue; // skip lamps on the road
+            const p=new THREE.Mesh(new THREE.CylinderGeometry(.08,.14,9,6),lpM);p.position.set(x,4.5,z);p.castShadow=true;scene.add(p);
+            const arm=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.5,4),lpM);arm.rotation.z=Math.PI/2;arm.position.set(x+.6,8.8,z);scene.add(arm);
+            const h=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),lhM);h.position.set(x+1.2,8.8,z);scene.add(h);
+            if(lightCount<6){const lt=new THREE.PointLight(0xffd080,1,25,2);lt.position.set(x+1.2,8.5,z);scene.add(lt);lightCount++}
+        }
+        // Lamps along both sides of the road
+        for(let x=-40;x<=40;x+=15){
+            [4,-4].forEach(zOff=>{
+                const p=new THREE.Mesh(new THREE.CylinderGeometry(.08,.14,9,6),lpM);p.position.set(x,4.5,zOff);p.castShadow=true;scene.add(p);
+                const arm=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.5,4),lpM);arm.rotation.z=Math.PI/2;arm.position.set(x+.6,8.8,zOff);scene.add(arm);
+                const h=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),lhM);h.position.set(x+1.2,8.8,zOff);scene.add(h);
+            });
+        }
 
-        // === DECOR ===
+        // === BENCHES (evenly spaced along road and in blocks) ===
         const wM=new THREE.MeshStandardMaterial({color:0x3a2010,roughness:.9});
-        for(let i=0;i<8;i++){
+        // Along road sides
+        for(let x=-35;x<=35;x+=18){
+            [6,-6].forEach(zOff=>{
+                const b=new THREE.Group();b.add(new THREE.Mesh(new THREE.BoxGeometry(2,.12,.5),wM));
+                const bk=new THREE.Mesh(new THREE.BoxGeometry(2,.6,.08),wM);bk.position.set(0,.36,-.22);b.add(bk);
+                b.position.set(x,.25,zOff);b.rotation.y=0;scene.add(b);
+            });
+        }
+        // A few in the blocks (away from road)
+        [[-20,20],[-20,-20],[20,20],[20,-20]].forEach(([bx,bz])=>{
             const b=new THREE.Group();b.add(new THREE.Mesh(new THREE.BoxGeometry(2,.12,.5),wM));
             const bk=new THREE.Mesh(new THREE.BoxGeometry(2,.6,.08),wM);bk.position.set(0,.36,-.22);b.add(bk);
-            // Avoid center street (z near 0) and all other streets
-            let bx,bz;do{bx=(Math.random()-.5)*75;bz=(Math.random()-.5)*75}while(onStreet(bx,bz));
-            b.position.set(bx,.25,bz);b.rotation.y=Math.random()*Math.PI;scene.add(b)}
+            b.position.set(bx,.25,bz);b.rotation.y=Math.PI/2;scene.add(b);
+        });
 
         // === PLAYER ===
         player=new THREE.Group();const bM=new THREE.MeshStandardMaterial({color:0x111,roughness:.5,metalness:.1});

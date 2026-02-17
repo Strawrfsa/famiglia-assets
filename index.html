@@ -399,23 +399,17 @@
         // === BOUNDARY BUILDINGS — WALL OUTSIDE ±44 ZONE ===
         // ============================================================
         // city.glb model extends ~20 units inward from its center.
-        // Centers at ±72 → inner face at ~±52 → safely outside PLIM=44.
-        // Scale 18, spacing 8 for dense imposing wall.
+        // Centers at ±78 with scale 20 → big imposing wall just behind sidewalks.
         const BOUND=46;
         loader.load(GLB_BASE+'city.glb',g=>{
-            const bScale=18;
+            const bScale=20;
             const positions=[];
-            // North wall (z = -72) — dense row
-            for(let x=-60;x<=60;x+=8){positions.push({x,z:-72,ry:Math.PI})}
-            // South wall (z = +72)
-            for(let x=-60;x<=60;x+=8){positions.push({x,z:72,ry:0})}
-            // West wall (x = -72) — skip road gap ±14
-            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-72,z,ry:-Math.PI/2})}
-            // East wall (x = +72)
-            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:72,z,ry:Math.PI/2})}
-            // Corner fills
-            [{x:-72,z:-72,ry:-Math.PI/4},{x:72,z:-72,ry:Math.PI/4},
-             {x:-72,z:72,ry:-Math.PI*3/4},{x:72,z:72,ry:Math.PI*3/4}].forEach(p=>positions.push(p));
+            for(let x=-60;x<=60;x+=8){positions.push({x,z:-78,ry:Math.PI})}
+            for(let x=-60;x<=60;x+=8){positions.push({x,z:78,ry:0})}
+            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
+            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
+            [{x:-78,z:-78,ry:-Math.PI/4},{x:78,z:-78,ry:Math.PI/4},
+             {x:-78,z:78,ry:-Math.PI*3/4},{x:78,z:78,ry:Math.PI*3/4}].forEach(p=>positions.push(p));
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -533,14 +527,14 @@
         const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
         extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoadR);
 
-        // === CITY2 BUILDINGS (far behind boundary) ===
+        // === CITY2 BUILDINGS (closer behind boundary) ===
         loader.load(GLB_BASE+'city2.glb',g=>{
             const sc=9;
             const positions=[
-                {x:-50,z:-100,ry:Math.PI},{x:-20,z:-100,ry:Math.PI},{x:10,z:-100,ry:Math.PI},{x:40,z:-100,ry:Math.PI},
-                {x:-50,z:100,ry:0},{x:-20,z:100,ry:0},{x:10,z:100,ry:0},{x:40,z:100,ry:0},
-                {x:-100,z:-45,ry:-Math.PI/2},{x:-100,z:0,ry:-Math.PI/2},{x:-100,z:45,ry:-Math.PI/2},
-                {x:100,z:-45,ry:Math.PI/2},{x:100,z:0,ry:Math.PI/2},{x:100,z:45,ry:Math.PI/2}
+                {x:-50,z:-88,ry:Math.PI},{x:-20,z:-88,ry:Math.PI},{x:10,z:-88,ry:Math.PI},{x:40,z:-88,ry:Math.PI},
+                {x:-50,z:88,ry:0},{x:-20,z:88,ry:0},{x:10,z:88,ry:0},{x:40,z:88,ry:0},
+                {x:-88,z:-45,ry:-Math.PI/2},{x:-88,z:0,ry:-Math.PI/2},{x:-88,z:45,ry:-Math.PI/2},
+                {x:88,z:-45,ry:Math.PI/2},{x:88,z:0,ry:Math.PI/2},{x:88,z:45,ry:Math.PI/2}
             ];
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(sc,sc,sc);
@@ -699,7 +693,7 @@
         const tlGreen=new THREE.MeshStandardMaterial({color:0x00cc00,emissive:0x00cc00,emissiveIntensity:.8});
         const tlRed2=new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:.5});
         const tlYellow=new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0xffcc00,emissiveIntensity:.3});
-        [[-82,-82],[82,-82],[-82,82],[82,82],[-72,0],[72,0]].forEach(([tlx,tlz])=>{
+        [[-84,-84],[84,-84],[-84,84],[84,84],[-78,0],[78,0]].forEach(([tlx,tlz])=>{
             const tl=new THREE.Group();
             tl.add(M(new THREE.CylinderGeometry(.08,.1,5,6),tlPole,0,2.5,0));
             const box=new THREE.Group();

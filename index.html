@@ -611,8 +611,8 @@
             mo.x=(e.clientX/innerWidth)*2-1;mo.y=-(e.clientY/innerHeight)*2+1;
             ray.setFromCamera(mo,camera);
             const pt=new THREE.Vector3();
-            ray.ray.intersectPlane(groundPlane,pt);
-            return pt.y!==undefined?pt:null;
+            const hit=ray.ray.intersectPlane(groundPlane,pt);
+            return hit?pt:null;
         }
         cv.addEventListener('click',e=>{if(!gameActive)return;const pt=gp(e);if(!pt)return;
             if(placing){placeCasino({x:pt.x,z:pt.z})}else{

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAMIGLIA - Mafia Empire on Solana</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%230A0A0A'/%3E%3Ctext x='32' y='22' font-family='serif' font-size='18' font-weight='bold' fill='%23D4AF37' text-anchor='middle'%3EF%3C/text%3E%3Cpath d='M20 30 L32 50 L44 30 Z' fill='none' stroke='%23D4AF37' stroke-width='2'/%3E%3Ccircle cx='32' cy='36' r='4' fill='%238B0000' stroke='%23D4AF37' stroke-width='1'/%3E%3Cpath d='M18 28 Q32 24 46 28' fill='none' stroke='%23D4AF37' stroke-width='1.5'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Cinzel:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -395,24 +396,24 @@
         function onStreet(x,z){return Math.abs(z)<4.5}
 
         // ============================================================
-        // === BOUNDARY BUILDINGS (city.glb) - OUTSIDE PLAYABLE ZONE ===
+        // === BOUNDARY BUILDINGS (city.glb) - WELL OUTSIDE PLAYABLE ZONE ===
         // ============================================================
-        // PLIM=44. Buildings at ±56 with scale 12, tight spacing 10.
-        // This guarantees they are well outside the ±44 movement zone.
+        // PLIM=44. Buildings at ±64 with scale 16, spacing 12.
+        // Road gap widened to ±10 so no building touches the road.
         const BOUND=46;
         loader.load(GLB_BASE+'city.glb',g=>{
-            const bScale=12;
+            const bScale=16;
             const positions=[];
-            // North wall (z = -56)
-            for(let x=-50;x<=50;x+=10){positions.push({x,z:-56,ry:Math.PI})}
-            // South wall (z = +56)
-            for(let x=-50;x<=50;x+=10){positions.push({x,z:56,ry:0})}
-            // West wall (x = -56) - skip road gap
-            for(let z=-50;z<=50;z+=10){if(Math.abs(z)<6)continue;positions.push({x:-56,z,ry:-Math.PI/2})}
-            // East wall (x = +56) - skip road gap
-            for(let z=-50;z<=50;z+=10){if(Math.abs(z)<6)continue;positions.push({x:56,z,ry:Math.PI/2})}
-            // Corner fill pieces
-            [{x:-56,z:-56,ry:Math.PI},{x:56,z:-56,ry:Math.PI},{x:-56,z:56,ry:0},{x:56,z:56,ry:0}].forEach(p=>positions.push(p));
+            // North wall (z = -64)
+            for(let x=-56;x<=56;x+=12){positions.push({x,z:-64,ry:Math.PI})}
+            // South wall (z = +64)
+            for(let x=-56;x<=56;x+=12){positions.push({x,z:64,ry:0})}
+            // West wall (x = -64) - wide road gap at z≈0
+            for(let z=-56;z<=56;z+=12){if(Math.abs(z)<10)continue;positions.push({x:-64,z,ry:-Math.PI/2})}
+            // East wall (x = +64) - wide road gap
+            for(let z=-56;z<=56;z+=12){if(Math.abs(z)<10)continue;positions.push({x:64,z,ry:Math.PI/2})}
+            // Corner fills
+            [{x:-64,z:-64,ry:-Math.PI/4},{x:64,z:-64,ry:Math.PI/4},{x:-64,z:64,ry:-Math.PI*3/4},{x:64,z:64,ry:Math.PI*3/4}].forEach(p=>positions.push(p));
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -420,10 +421,10 @@
                 scene.add(c)});
         });
 
-        // 6 STATIC CARS parked outside zone
+        // 6 STATIC CARS parked outside zone (along background roads)
         carData.forEach((cd,idx)=>{
             loader.load(GLB_BASE+cd.file,g=>{
-                [{x:-65,z:20,ry:0},{x:65,z:-20,ry:Math.PI},{x:-20,z:-65,ry:Math.PI/2},{x:20,z:65,ry:-Math.PI/2},{x:-65,z:-30,ry:.3},{x:65,z:30,ry:-.3}]
+                [{x:-75,z:20,ry:0},{x:75,z:-20,ry:Math.PI},{x:-20,z:-75,ry:Math.PI/2},{x:20,z:75,ry:-Math.PI/2},{x:-75,z:-30,ry:.3},{x:75,z:30,ry:-.3}]
                 .filter((_,i)=>i%3===idx).forEach(p=>{
                     const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
                     car.scale.set(cd.scale,cd.scale,cd.scale);
@@ -477,30 +478,28 @@
         const groundBot=new THREE.Mesh(new THREE.PlaneGeometry(90,42),playGroundMat);
         groundBot.rotation.x=-Math.PI/2;groundBot.position.set(0,.01,-23.5);groundBot.receiveShadow=true;groundBot.name='g';scene.add(groundBot);
 
-        // === SIDEWALKS (concrete strips around playable zone edges) ===
+        // === SIDEWALKS (concrete curbs around playable zone edges) ===
         const swc=document.createElement('canvas');swc.width=256;swc.height=256;const swx=swc.getContext('2d');
         swx.fillStyle='#2a2a28';swx.fillRect(0,0,256,256);
         for(let i=0;i<5000;i++){const b=~~(Math.random()*15)+30;swx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.25})`;swx.fillRect(Math.random()*256,Math.random()*256,Math.random()*2+.5,Math.random()*2+.5)}
-        // Grid lines for sidewalk tiles
         swx.strokeStyle='rgba(15,15,12,.5)';swx.lineWidth=2;
         for(let i=0;i<=4;i++){const v=i/4*256;swx.beginPath();swx.moveTo(v,0);swx.lineTo(v,256);swx.stroke();swx.beginPath();swx.moveTo(0,v);swx.lineTo(256,v);swx.stroke()}
-        const swt=new THREE.CanvasTexture(swc);swt.wrapS=swt.wrapT=THREE.RepeatWrapping;swt.repeat.set(6,1);
+        const swt=new THREE.CanvasTexture(swc);swt.wrapS=swt.wrapT=THREE.RepeatWrapping;swt.repeat.set(8,1);
         const sidewalkMat=new THREE.MeshStandardMaterial({map:swt,roughness:.88,metalness:.02});
-        // Curb (slightly raised) - all 4 sides
         // North sidewalk
-        const swN=new THREE.Mesh(new THREE.BoxGeometry(90,0.15,4),sidewalkMat);
-        swN.position.set(0,.075,-46);swN.receiveShadow=true;scene.add(swN);
+        const swN=new THREE.Mesh(new THREE.BoxGeometry(92,0.18,3),sidewalkMat);
+        swN.position.set(0,.09,-46.5);swN.receiveShadow=true;scene.add(swN);
         // South sidewalk
-        const swS=new THREE.Mesh(new THREE.BoxGeometry(90,0.15,4),sidewalkMat);
-        swS.position.set(0,.075,46);swS.receiveShadow=true;scene.add(swS);
+        const swS=new THREE.Mesh(new THREE.BoxGeometry(92,0.18,3),sidewalkMat);
+        swS.position.set(0,.09,46.5);swS.receiveShadow=true;scene.add(swS);
         // West sidewalk
-        const swW=new THREE.Mesh(new THREE.BoxGeometry(4,0.15,88),sidewalkMat.clone());
-        swW.material.map=swt.clone();swW.material.map.repeat.set(1,6);
-        swW.position.set(-46,.075,0);swW.receiveShadow=true;scene.add(swW);
+        const swW=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,90),sidewalkMat.clone());
+        swW.material.map=swt.clone();swW.material.map.repeat.set(1,8);
+        swW.position.set(-46.5,.09,0);swW.receiveShadow=true;scene.add(swW);
         // East sidewalk
-        const swE=new THREE.Mesh(new THREE.BoxGeometry(4,0.15,88),sidewalkMat.clone());
-        swE.material.map=swt.clone();swE.material.map.repeat.set(1,6);
-        swE.position.set(46,.075,0);swE.receiveShadow=true;scene.add(swE);
+        const swE=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,90),sidewalkMat.clone());
+        swE.material.map=swt.clone();swE.material.map.repeat.set(1,8);
+        swE.position.set(46.5,.09,0);swE.receiveShadow=true;scene.add(swE);
 
         // === CENTER STREET (horizontal, z=0) ===
         const sc=document.createElement('canvas');sc.width=512;sc.height=128;const sx=sc.getContext('2d');
@@ -516,43 +515,144 @@
         centerStreet.rotation.x=-Math.PI/2;centerStreet.position.set(0,.02,0);
         centerStreet.receiveShadow=true;centerStreet.name='g';scene.add(centerStreet);
 
-        // === BACKGROUND ROADS (outside playable square, NOT crossing through it) ===
-        // Road running along North boundary (z = -56)
-        const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(130,5),sm.clone());
-        bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-56);scene.add(bgRoadN);
-        // Road running along South boundary (z = +56)
-        const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(130,5),sm.clone());
-        bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,56);scene.add(bgRoadS);
-        // Road running along West boundary (x = -56)
-        const bgRoadWtex=st.clone();bgRoadWtex.rotation=Math.PI/2;
+        // === BACKGROUND ROADS (along building walls at ±64, NOT through playable zone) ===
+        // North road (z = -64)
+        const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(150,6),sm.clone());
+        bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-64);scene.add(bgRoadN);
+        // South road (z = +64)
+        const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(150,6),sm.clone());
+        bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,64);scene.add(bgRoadS);
+        // West road (x = -64)
         const bgSmV=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
-        const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(5,130),bgSmV);
-        bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-56,.01,0);scene.add(bgRoadW);
-        // Road running along East boundary (x = +56)
-        const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(5,130),bgSmV.clone());
-        bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(56,.01,0);scene.add(bgRoadE);
-        // Extended center road going out left and right (through road gap in buildings)
+        const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(6,150),bgSmV);
+        bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-64,.01,0);scene.add(bgRoadW);
+        // East road (x = +64)
+        const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(6,150),bgSmV.clone());
+        bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(64,.01,0);scene.add(bgRoadE);
+        // Extended center road going out left and right (through road gap)
         const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
         extRoadL.rotation.x=-Math.PI/2;extRoadL.position.set(-145,.01,0);scene.add(extRoadL);
         const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
         extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoadR);
 
         // ============================================================
-        // === CITY2 BUILDINGS (second row behind boundary) ===
+        // === CITY2 BUILDINGS (second row, further behind boundary) ===
         // ============================================================
         loader.load(GLB_BASE+'city2.glb',g=>{
-            const sc=7;
+            const sc=8;
             const positions=[
-                {x:-35,z:-72,ry:Math.PI},{x:-10,z:-72,ry:Math.PI},{x:15,z:-72,ry:Math.PI},{x:40,z:-72,ry:Math.PI},
-                {x:-35,z:72,ry:0},{x:-10,z:72,ry:0},{x:15,z:72,ry:0},{x:40,z:72,ry:0},
-                {x:-72,z:-30,ry:-Math.PI/2},{x:-72,z:0,ry:-Math.PI/2},{x:-72,z:30,ry:-Math.PI/2},
-                {x:72,z:-30,ry:Math.PI/2},{x:72,z:0,ry:Math.PI/2},{x:72,z:30,ry:Math.PI/2}
+                // Behind north wall
+                {x:-40,z:-82,ry:Math.PI},{x:-15,z:-82,ry:Math.PI},{x:10,z:-82,ry:Math.PI},{x:35,z:-82,ry:Math.PI},
+                // Behind south wall
+                {x:-40,z:82,ry:0},{x:-15,z:82,ry:0},{x:10,z:82,ry:0},{x:35,z:82,ry:0},
+                // Behind west wall
+                {x:-82,z:-35,ry:-Math.PI/2},{x:-82,z:0,ry:-Math.PI/2},{x:-82,z:35,ry:-Math.PI/2},
+                // Behind east wall
+                {x:82,z:-35,ry:Math.PI/2},{x:82,z:0,ry:Math.PI/2},{x:82,z:35,ry:Math.PI/2}
             ];
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(sc,sc,sc);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
                 c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
                 scene.add(c)});
+        });
+
+        // ============================================================
+        // === REALISTIC DETAILS — Props & Environment ===
+        // ============================================================
+        const metalDark=new THREE.MeshStandardMaterial({color:0x333,metalness:.7,roughness:.3});
+        const metalRust=new THREE.MeshStandardMaterial({color:0x5a3a1a,metalness:.5,roughness:.7});
+        const redMat=new THREE.MeshStandardMaterial({color:0xcc2200,roughness:.4,metalness:.3});
+
+        // --- FIRE HYDRANTS (along sidewalks) ---
+        [[-38,-46],[38,-46],[-38,46],[38,46],[-15,-46],[15,46]].forEach(([hx,hz])=>{
+            const hy=new THREE.Group();
+            hy.add(M(new THREE.CylinderGeometry(.2,.25,.9,8),redMat,0,.45,0));
+            hy.add(M(new THREE.SphereGeometry(.22,8,8),redMat,0,.95,0));
+            hy.add(M(new THREE.CylinderGeometry(.08,.08,.3,6),metalDark,.25,.6,0));
+            hy.add(M(new THREE.CylinderGeometry(.08,.08,.3,6),metalDark,-.25,.6,0));
+            hy.position.set(hx,.0,hz);scene.add(hy);
+        });
+
+        // --- DUMPSTERS (behind buildings, in alleys) ---
+        const dumpMat=new THREE.MeshStandardMaterial({color:0x2a4a2a,roughness:.8,metalness:.2});
+        [[-42,30],[42,-25],[-42,-35],[42,20]].forEach(([dx,dz])=>{
+            const d=new THREE.Group();
+            d.add(M(new THREE.BoxGeometry(2,1.5,1.2),dumpMat,0,.75,0));
+            // Lid
+            d.add(M(new THREE.BoxGeometry(2.1,.08,1.3),metalDark,0,1.52,0));
+            d.position.set(dx,0,dz);d.rotation.y=Math.random()*0.3;scene.add(d);
+        });
+
+        // --- TRASH CANS (along sidewalks) ---
+        const trashMat=new THREE.MeshStandardMaterial({color:0x444,metalness:.6,roughness:.4});
+        [[-25,-46],[0,-46],[25,-46],[-25,46],[0,46],[25,46],[-46,-20],[-46,20],[46,-20],[46,20]].forEach(([tx,tz])=>{
+            const t=new THREE.Group();
+            t.add(M(new THREE.CylinderGeometry(.25,.3,.7,8),trashMat,0,.35,0));
+            t.add(M(new THREE.CylinderGeometry(.28,.28,.05,8),metalDark,0,.72,0));
+            t.position.set(tx,0,tz);scene.add(t);
+        });
+
+        // --- MANHOLES (on streets) ---
+        const manholeMat=new THREE.MeshStandardMaterial({color:0x222,metalness:.8,roughness:.3});
+        [[-20,0],[20,0],[0,0],[-64,-64],[64,64]].forEach(([mx,mz])=>{
+            const mh=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.04,16),manholeMat);
+            mh.position.set(mx,.03,mz);scene.add(mh);
+            // Ring
+            const ring=new THREE.Mesh(new THREE.RingGeometry(.35,.5,16),new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:.9,roughness:.2}));
+            ring.rotation.x=-Math.PI/2;ring.position.set(mx,.05,mz);scene.add(ring);
+        });
+
+        // --- PUDDLES (small reflective spots on ground) ---
+        const puddleMat=new THREE.MeshStandardMaterial({color:0x111,metalness:.95,roughness:.05,transparent:true,opacity:.4});
+        [[-15,15,2],[10,-20,1.5],[30,25,1.8],[-25,-15,1.2],[5,35,2.2]].forEach(([px,pz,pr])=>{
+            const p=new THREE.Mesh(new THREE.CircleGeometry(pr,16),puddleMat);
+            p.rotation.x=-Math.PI/2;p.position.set(px,.02,pz);scene.add(p);
+        });
+
+        // --- CRATES & BARRELS (scattered in playable zone) ---
+        const crateMat=new THREE.MeshStandardMaterial({color:0x3a2810,roughness:.9,metalness:.05});
+        const barrelMat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.85,metalness:.1});
+        // Crate stacks
+        [[-35,15],[35,-20],[-10,30],[15,-35]].forEach(([cx,cz])=>{
+            const c=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2),crateMat);
+            c.position.set(cx,.6,cz);c.rotation.y=Math.random()*.5;c.castShadow=true;scene.add(c);
+            if(Math.random()>.5){const c2=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),crateMat);
+                c2.position.set(cx+.1,1.7,cz-.1);c2.rotation.y=.3;c2.castShadow=true;scene.add(c2)}
+        });
+        // Barrels
+        [[-30,-25],[28,15],[-8,-30],[20,30]].forEach(([bx,bz])=>{
+            const b=new THREE.Mesh(new THREE.CylinderGeometry(.4,.45,.9,10),barrelMat);
+            b.position.set(bx,.45,bz);b.castShadow=true;scene.add(b);
+            // Metal bands
+            const band=new THREE.Mesh(new THREE.CylinderGeometry(.46,.46,.05,10),metalDark);
+            band.position.set(bx,.2,bz);scene.add(band);
+            const band2=new THREE.Mesh(new THREE.CylinderGeometry(.46,.46,.05,10),metalDark);
+            band2.position.set(bx,.7,bz);scene.add(band2);
+        });
+
+        // --- NEWSPAPER STANDS (near sidewalks) ---
+        const newsMat=new THREE.MeshStandardMaterial({color:0x8B0000,roughness:.6,metalness:.3});
+        [[-46,-30],[46,15]].forEach(([nx,nz])=>{
+            const n=new THREE.Group();
+            n.add(M(new THREE.BoxGeometry(.8,1.2,.5),newsMat,0,.6,0));
+            n.add(M(new THREE.BoxGeometry(.85,.05,.55),metalDark,0,1.22,0));
+            // Glass front
+            n.add(M(new THREE.BoxGeometry(.75,.6,.02),new THREE.MeshStandardMaterial({color:0x88aacc,metalness:.9,roughness:.1,transparent:true,opacity:.3}),0,.8,.26));
+            n.position.set(nx,0,nz);scene.add(n);
+        });
+
+        // --- PHONE BOOTHS (classic red) ---
+        const boothMat=new THREE.MeshStandardMaterial({color:0xaa0000,roughness:.5,metalness:.2});
+        [[-46,10],[46,-15]].forEach(([bx,bz])=>{
+            const booth=new THREE.Group();
+            booth.add(M(new THREE.BoxGeometry(1,2.5,1),boothMat,0,1.25,0));
+            booth.add(M(new THREE.BoxGeometry(1.05,.1,1.05),metalDark,0,2.55,0));
+            // Windows
+            [.51,-.51].forEach(side=>{
+                booth.add(M(new THREE.BoxGeometry(.02,1.2,.7),new THREE.MeshStandardMaterial({color:0x88aacc,metalness:.9,roughness:.1,transparent:true,opacity:.25}),side,1.4,0));
+            });
+            booth.position.set(bx,0,bz);scene.add(booth);
         });
 
         // === LAMP POSTS ===

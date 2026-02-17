@@ -367,10 +367,11 @@
         const ogS=new THREE.Mesh(new THREE.PlaneGeometry(600,295),_ogMat);
         ogS.rotation.x=-Math.PI/2;ogS.position.set(0,-.06,150);ogS.name='g';scene.add(ogS);
 
-        // Extended road (same texture as center street) going to horizon
-        const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(250,5),sm);
+        // Extended road going to horizon
+        const _rdMat=new THREE.MeshStandardMaterial({color:0x141414,roughness:.9});
+        const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(250,5),_rdMat);
         extRoadL.rotation.x=-Math.PI/2;extRoadL.position.set(-175,0,0);scene.add(extRoadL);
-        const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(250,5),sm);
+        const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(250,5),_rdMat);
         extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(175,0,0);scene.add(extRoadR);
 
         // === CITY GLB MODELS ===

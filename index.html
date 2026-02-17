@@ -361,10 +361,10 @@
         const sky=new THREE.Mesh(skyGeo,skyMat);scene.add(sky);
 
         // === OUTER LANDSCAPE ===
-        // Same ground TEXTURE as playable area (seamless)
-        const ogN=new THREE.Mesh(new THREE.PlaneGeometry(600,295),new THREE.MeshStandardMaterial({map:gt,roughness:.95,metalness:.05}));
+        const _ogMat=new THREE.MeshStandardMaterial({color:0x1c1c1c,roughness:.95,metalness:.05});
+        const ogN=new THREE.Mesh(new THREE.PlaneGeometry(600,295),_ogMat);
         ogN.rotation.x=-Math.PI/2;ogN.position.set(0,-.06,-150);ogN.name='g';scene.add(ogN);
-        const ogS=new THREE.Mesh(new THREE.PlaneGeometry(600,295),new THREE.MeshStandardMaterial({map:gt,roughness:.95,metalness:.05}));
+        const ogS=new THREE.Mesh(new THREE.PlaneGeometry(600,295),_ogMat);
         ogS.rotation.x=-Math.PI/2;ogS.position.set(0,-.06,150);ogS.name='g';scene.add(ogS);
 
         // Extended road (same texture as center street) going to horizon

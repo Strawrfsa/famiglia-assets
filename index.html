@@ -228,6 +228,8 @@
 
     // === SHOOTING & EXPLOSIONS ===
     let bullets=[],explosions=[];
+    let lastShotTime=0;
+    const SHOT_COOLDOWN=1000; // 1 second
 
     function toast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d)}
     function openWallet(){document.getElementById('walletMod').classList.add('active');document.getElementById('walletOv').classList.add('active')}
@@ -287,7 +289,7 @@
         if(money<PRICE){toast('NOT ENOUGH MONEY!');return}
         money-=PRICE;exitPlacement();
         loader.load(GLB_BASE+'harlem_casino.glb',g=>{
-            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.35,.35,.35);m.rotation.y=Math.PI;
+            const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.5,.5,.5);m.rotation.y=Math.PI;
             m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
             scene.add(m);casinos.push({model:m,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
         },undefined,()=>{
@@ -404,13 +406,14 @@
         // BARRICADE cars around boundary (±46), evenly spaced
         const BOUND=46;
         const barricadeSpots=[];
-        // Top and bottom edges (cars perpendicular to edge)
-        for(let x=-BOUND;x<=BOUND;x+=6){
+        // Top and bottom edges only (not corners)
+        for(let x=-BOUND+4;x<=BOUND-4;x+=8){
             barricadeSpots.push({x, z:-BOUND, ry:Math.PI/2});
             barricadeSpots.push({x, z:BOUND, ry:Math.PI/2});
         }
-        // Left and right edges (cars parallel to edge)
-        for(let z=-BOUND;z<=BOUND;z+=6){
+        // Left and right edges only (not corners, skip road area)
+        for(let z=-BOUND+4;z<=BOUND-4;z+=8){
+            if(Math.abs(z)<5) continue; // skip road
             barricadeSpots.push({x:-BOUND, z, ry:0});
             barricadeSpots.push({x:BOUND, z, ry:0});
         }
@@ -421,7 +424,7 @@
                 barricadeSpots.filter((_,i)=>i%3===idx).forEach(p=>{
                     const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
                     car.scale.set(cd.scale,cd.scale,cd.scale);
-                    car.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
+                    car.traverse(c=>{if(c.isMesh){c.castShadow=false;c.receiveShadow=false}});
                     scene.add(car);
                 });
             },undefined,()=>{
@@ -582,6 +585,9 @@
         ];
 
         function shoot(){
+            const now=Date.now();
+            if(now-lastShotTime<SHOT_COOLDOWN) return;
+            lastShotTime=now;
             // Play gunshot sound
             gunshotSfx.currentTime=0;gunshotSfx.play().catch(()=>{});
             // Create bullet from player position in facing direction

@@ -223,7 +223,7 @@
     }
 
     // === GUNSHOT SOUND ===
-    const gunshotSfx=new Audio(GLB_BASE+'gunshot.wav');
+    const gunshotSfx=new Audio(GLB_BASE+'gunshot.mp3');
     gunshotSfx.volume=0.5;
 
     // === SHOOTING & EXPLOSIONS ===
@@ -361,8 +361,71 @@
         const sky=new THREE.Mesh(skyGeo,skyMat);scene.add(sky);
 
         // === OUTER LANDSCAPE (beyond playable area) ===
-        const outerGround=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x1a1a12,roughness:1,metalness:0}));
+        const outerGround=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x0e0e0e,roughness:1,metalness:0}));
         outerGround.rotation.x=-Math.PI/2;outerGround.position.y=-.05;outerGround.name='g';scene.add(outerGround);
+
+        // === CITY GLB MODELS ===
+        // city.glb = close (NYC brick row), city2.glb = far (taller buildings)
+        // Close ring: 8 copies of city.glb around zone
+        loader.load(GLB_BASE+'city.glb',g=>{
+            const box=new THREE.Box3().setFromObject(g.scene);
+            const size=new THREE.Vector3();box.getSize(size);
+            const maxDim=Math.max(size.x,size.z);
+            // Scale so it fits nicely (~30 units wide)
+            const sc=30/maxDim;
+            const positions=[
+                {x:0,z:-60,ry:0},{x:0,z:60,ry:Math.PI},
+                {x:-60,z:0,ry:Math.PI/2},{x:60,z:0,ry:-Math.PI/2},
+                {x:-45,z:-45,ry:Math.PI/4},{x:45,z:-45,ry:-Math.PI/4},
+                {x:-45,z:45,ry:Math.PI*3/4},{x:45,z:45,ry:-Math.PI*3/4},
+                // Extra fill
+                {x:30,z:-60,ry:0},{x:-30,z:-60,ry:0},
+                {x:30,z:60,ry:Math.PI},{x:-30,z:60,ry:Math.PI},
+                {x:-60,z:30,ry:Math.PI/2},{x:-60,z:-30,ry:Math.PI/2},
+                {x:60,z:30,ry:-Math.PI/2},{x:60,z:-30,ry:-Math.PI/2}
+            ];
+            positions.forEach(p=>{
+                const c=g.scene.clone();c.scale.set(sc,sc,sc);
+                c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
+                c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
+                scene.add(c)});
+        });
+        // Far ring: city2.glb taller buildings behind
+        loader.load(GLB_BASE+'city2.glb',g=>{
+            const box=new THREE.Box3().setFromObject(g.scene);
+            const size=new THREE.Vector3();box.getSize(size);
+            const maxDim=Math.max(size.x,size.z);
+            const sc=25/maxDim;
+            for(let angle=0;angle<Math.PI*2;angle+=Math.PI/6){
+                const dist=100+Math.random()*40;
+                const c=g.scene.clone();c.scale.set(sc,sc,sc);
+                c.position.set(Math.cos(angle)*dist,0,Math.sin(angle)*dist);
+                c.rotation.y=angle+Math.PI; // face inward
+                c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
+                scene.add(c)}
+        });
+        // Fallback procedural buildings if GLB fails
+        function loadFallbackCity(){
+            const brickColors=[0x3a1a1a,0x2a1515,0x1a1218,0x221a1a,0x181420,0x1a1a22];
+            const winMat=new THREE.MeshBasicMaterial({color:0xffdd88,transparent:true});
+            function makeB(bx,bz,bw,bd,bh){
+                const mat=new THREE.MeshStandardMaterial({color:brickColors[~~(Math.random()*brickColors.length)],roughness:.9});
+                const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat);
+                b.position.set(bx,bh/2,bz);scene.add(b);
+                for(let wy=2;wy<bh-1;wy+=3){for(let wx=-bw/2+1;wx<bw/2;wx+=2.5){
+                    if(Math.random()>.4){const w=winMat.clone();w.opacity=.2+Math.random()*.5;
+                        const wm=new THREE.Mesh(new THREE.PlaneGeometry(.8,1.2),w);
+                        wm.position.set(bx+wx,wy,bz+bd/2+.01);scene.add(wm)}}}
+            }
+            for(let a=0;a<Math.PI*2;a+=.18){const d=54+Math.random()*8;makeB(Math.cos(a)*d,Math.sin(a)*d,5+Math.random()*6,5+Math.random()*6,8+Math.random()*18)}
+            for(let a=0;a<Math.PI*2;a+=.15){const d=80+Math.random()*30;makeB(Math.cos(a)*d,Math.sin(a)*d,6+Math.random()*8,5+Math.random()*7,12+Math.random()*28)}
+            for(let a=0;a<Math.PI*2;a+=.2){const d=130+Math.random()*70;makeB(Math.cos(a)*d,Math.sin(a)*d,8+Math.random()*10,8+Math.random()*10,25+Math.random()*45)}
+        }
+        // Trigger fallback after timeout if models don't load
+        let cityLoaded=false;
+        loader.load(GLB_BASE+'city.glb',()=>{cityLoaded=true},undefined,()=>{loadFallbackCity()});
+        setTimeout(()=>{if(!cityLoaded)loadFallbackCity()},8000);
+
         // === TRAFFIC CARS (drive along CENTER HORIZONTAL street only, z=0) ===
         function M(geo,mat,x,y,z,shadow){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);if(shadow)m.castShadow=true;return m}
         const trafficCars=[];
@@ -626,7 +689,7 @@
                 scene.add(sm);
                 explosions.push({mesh:sm,vy:.01+Math.random()*.02,life:0,maxLife:60+Math.random()*30});
             }
-            toast('CAR DESTROYED! +$2,000');money+=2000;updateUI();
+            toast('CAR DESTROYED!');
         }
 
         window.addEventListener('keydown',e=>{

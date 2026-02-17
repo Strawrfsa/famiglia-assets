@@ -98,6 +98,7 @@
     <div class="top-buttons">
         <button class="top-btn" id="walletBtn" onclick="openWallet()">CONNECT WALLET</button>
         <button class="top-btn" onclick="window.open('docs.html','_blank')">DOCS</button>
+        <button class="top-btn" id="musicBtn" onclick="toggleMusic()" style="font-size:1.1rem;padding:12px 16px">🔇</button>
     </div>
     <div class="placement-banner" id="placeBanner">LEFT CLICK TO PLACE · RIGHT CLICK TO CANCEL</div>
     <div class="toast" id="toast"></div>
@@ -197,7 +198,7 @@
                 <button class="hud-btn" onclick="openShop()">THE BLACK MARKET</button>
             </div>
             <div class="minimap-wrap"><canvas id="mm" width="200" height="200" style="display:block"></canvas><div class="minimap-label">MAP</div></div>
-            <div class="ctrl"><div class="ctrl-t">CONTROLS</div><div>🖱️ Left Click — Move</div><div>🏢 Shop — Buy & Place</div><div>🔍 Scroll — Zoom</div></div>
+            <div class="ctrl"><div class="ctrl-t">CONTROLS</div><div>🖱️ Left Click — Move</div><div>🏢 Shop — Buy & Place</div><div>🔍 Scroll — Zoom</div><div>🔫 Enter — Shoot</div></div>
         </div>
     </div>
 
@@ -211,6 +212,22 @@
     let wp=null,wpArr=[];
     const PRICE=25000,INCOME=500;
     const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
+
+    // === MUSIC ===
+    let musicPlaying=false;
+    const music=new Audio(GLB_BASE+'godfather_song.mp3');
+    music.loop=true;music.volume=0.3;
+    function toggleMusic(){
+        if(musicPlaying){music.pause();musicPlaying=false;document.getElementById('musicBtn').textContent='🔇'}
+        else{music.play().catch(()=>{});musicPlaying=true;document.getElementById('musicBtn').textContent='🔊'}
+    }
+
+    // === GUNSHOT SOUND ===
+    const gunshotSfx=new Audio(GLB_BASE+'gunshot.mp3');
+    gunshotSfx.volume=0.5;
+
+    // === SHOOTING & EXPLOSIONS ===
+    let bullets=[],explosions=[];
 
     function toast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d)}
     function openWallet(){document.getElementById('walletMod').classList.add('active');document.getElementById('walletOv').classList.add('active')}
@@ -384,12 +401,6 @@
         // Only center street (z=0, width 5 + margin)
         function onStreet(x,z){return Math.abs(z)<4.5}
 
-        // 3 cars INSIDE playable zone, NOT on road
-        const innerSpots=[];
-        while(innerSpots.length<3){
-            const x=(Math.random()-.5)*70,z=(Math.random()-.5)*70;
-            if(!onStreet(x,z)&&Math.abs(x)<40&&Math.abs(z)<40&&Math.abs(z)>6) innerSpots.push({x,z,ry:Math.random()*Math.PI*2})}
-
         // BARRICADE cars around boundary (±46), evenly spaced
         const BOUND=46;
         const barricadeSpots=[];
@@ -404,18 +415,9 @@
             barricadeSpots.push({x:BOUND, z, ry:0});
         }
 
-        // Load and place all cars
+        // Load and place barricade cars only (no cars inside zone)
         carData.forEach((cd,idx)=>{
             loader.load(GLB_BASE+cd.file,g=>{
-                // Inner cars (1 per model)
-                if(idx<innerSpots.length){
-                    const p=innerSpots[idx];
-                    const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
-                    car.scale.set(cd.scale,cd.scale,cd.scale);
-                    car.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
-                    scene.add(car);
-                }
-                // Barricade cars (distribute evenly among 3 models)
                 barricadeSpots.filter((_,i)=>i%3===idx).forEach(p=>{
                     const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
                     car.scale.set(cd.scale,cd.scale,cd.scale);
@@ -423,13 +425,7 @@
                     scene.add(car);
                 });
             },undefined,()=>{
-                // Fallback box cars
                 const cm=trafficMat[idx%trafficMat.length];
-                if(idx<innerSpots.length){
-                    const p=innerSpots[idx];const c=new THREE.Group();
-                    c.add(M(new THREE.BoxGeometry(1.8,.7,4),cm,0,.4,0,true));
-                    c.add(M(new THREE.BoxGeometry(1.5,.55,1.8),cm,0,1,-.3));
-                    c.position.set(p.x,0,p.z);c.rotation.y=p.ry;scene.add(c)}
                 barricadeSpots.filter((_,i)=>i%3===idx).forEach(p=>{
                     const c=new THREE.Group();
                     c.add(M(new THREE.BoxGeometry(1.8,.7,4),cm,0,.4,0,true));
@@ -576,6 +572,61 @@
             placeArrows.forEach(a=>{a.position.set(pt.x+a.userData.ox,.12,pt.z+a.userData.oz);a.rotation.z=a.userData.rz})});
         cv.addEventListener('wheel',e=>{e.preventDefault();camDist+=e.deltaY*.03;camDist=Math.max(camMin,Math.min(camMax,camDist))},{passive:false});
 
+        // === SHOOTING (Enter key) ===
+        const bulletMat=new THREE.MeshBasicMaterial({color:0xFFD700});
+        const explosionMat=new THREE.MeshBasicMaterial({color:0xFF4500,transparent:true});
+        const fireMats=[
+            new THREE.MeshBasicMaterial({color:0xFF4500,transparent:true}),
+            new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true}),
+            new THREE.MeshBasicMaterial({color:0xFFAA00,transparent:true})
+        ];
+
+        function shoot(){
+            // Play gunshot sound
+            gunshotSfx.currentTime=0;gunshotSfx.play().catch(()=>{});
+            // Create bullet from player position in facing direction
+            const b=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),bulletMat);
+            const dir=player.rotation.y;
+            b.position.set(player.position.x+Math.sin(dir)*.8,1,player.position.z+Math.cos(dir)*.8);
+            scene.add(b);
+            // Muzzle flash
+            const flash=new THREE.PointLight(0xFFAA00,3,10);
+            flash.position.copy(b.position);scene.add(flash);
+            setTimeout(()=>scene.remove(flash),80);
+            bullets.push({mesh:b,dx:Math.sin(dir)*.8,dz:Math.cos(dir)*.8,life:0});
+        }
+
+        function explodeCar(tc){
+            const pos=tc.mesh.position.clone();
+            // Remove the car
+            scene.remove(tc.mesh);
+            const idx=trafficCars.indexOf(tc);if(idx>-1)trafficCars.splice(idx,1);
+            // Create explosion particles
+            for(let i=0;i<15;i++){
+                const s=.2+Math.random()*.5;
+                const p=new THREE.Mesh(new THREE.SphereGeometry(s,6,6),fireMats[~~(Math.random()*3)].clone());
+                p.position.set(pos.x+(Math.random()-.5)*3,Math.random()*3+.5,pos.z+(Math.random()-.5)*3);
+                scene.add(p);
+                explosions.push({mesh:p,vy:.02+Math.random()*.04,life:0,maxLife:40+Math.random()*30});
+            }
+            // Explosion light
+            const el=new THREE.PointLight(0xFF4500,5,30);el.position.set(pos.x,3,pos.z);scene.add(el);
+            setTimeout(()=>scene.remove(el),500);
+            // Smoke
+            const smokeMat=new THREE.MeshBasicMaterial({color:0x333,transparent:true,opacity:.6});
+            for(let i=0;i<8;i++){
+                const sm=new THREE.Mesh(new THREE.SphereGeometry(.3+Math.random()*.4,6,6),smokeMat.clone());
+                sm.position.set(pos.x+(Math.random()-.5)*2,1+Math.random()*2,pos.z+(Math.random()-.5)*2);
+                scene.add(sm);
+                explosions.push({mesh:sm,vy:.01+Math.random()*.02,life:0,maxLife:60+Math.random()*30});
+            }
+            toast('CAR DESTROYED! +$2,000');money+=2000;updateUI();
+        }
+
+        window.addEventListener('keydown',e=>{
+            if(e.key==='Enter'&&gameActive&&!placing){e.preventDefault();shoot()}
+        });
+
         // === ANIMATE ===
         (function run(){if(!gameActive)return;requestAnimationFrame(run);const t=Date.now()*.001;
             // Day/night cycle
@@ -615,6 +666,25 @@
             }
             // Spawn new cars occasionally
             if(Math.random()<.0005&&trafficCars.length<1) spawnTrafficCar();
+            // Bullets
+            for(let i=bullets.length-1;i>=0;i--){
+                const b=bullets[i];b.mesh.position.x+=b.dx;b.mesh.position.z+=b.dz;b.life++;
+                // Check collision with traffic cars
+                let hit=false;
+                for(let j=trafficCars.length-1;j>=0;j--){
+                    const tc=trafficCars[j];
+                    const dx=b.mesh.position.x-tc.mesh.position.x,dz=b.mesh.position.z-tc.mesh.position.z;
+                    if(Math.sqrt(dx*dx+dz*dz)<3){explodeCar(tc);hit=true;break}
+                }
+                if(hit||b.life>120){scene.remove(b.mesh);bullets.splice(i,1)}
+            }
+            // Explosions
+            for(let i=explosions.length-1;i>=0;i--){
+                const e=explosions[i];e.mesh.position.y+=e.vy;e.life++;
+                e.mesh.material.opacity=1-(e.life/e.maxLife);
+                const s=e.mesh.scale.x*(1+.02);e.mesh.scale.set(s,s,s);
+                if(e.life>e.maxLife){scene.remove(e.mesh);explosions.splice(i,1)}
+            }
             // Minimap
             const mc=document.getElementById('mm');if(mc){const ctx=mc.getContext('2d'),sz=200,ms=100;
                 ctx.fillStyle='#080808';ctx.fillRect(0,0,sz,sz);

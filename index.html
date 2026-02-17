@@ -396,20 +396,24 @@
         function onStreet(x,z){return Math.abs(z)<4.5}
 
         // ============================================================
-        // === BOUNDARY BUILDINGS — WALL OUTSIDE ±44 ZONE ===
+        // === BOUNDARY BUILDINGS — NO CROSSING AT CORNERS ===
         // ============================================================
-        // city.glb model extends ~20 units inward from its center.
-        // Centers at ±78 with scale 20 → big imposing wall just behind sidewalks.
+        // Scale 22, centers at ±78.
+        // N/S walls: full width x=-65..65
+        // E/W walls: SHORTER z=-55..55 to avoid crossing N/S walls at corners.
+        // NO diagonal corner fills.
         const BOUND=46;
         loader.load(GLB_BASE+'city.glb',g=>{
-            const bScale=20;
+            const bScale=22;
             const positions=[];
-            for(let x=-60;x<=60;x+=8){positions.push({x,z:-78,ry:Math.PI})}
-            for(let x=-60;x<=60;x+=8){positions.push({x,z:78,ry:0})}
-            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
-            for(let z=-60;z<=60;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
-            [{x:-78,z:-78,ry:-Math.PI/4},{x:78,z:-78,ry:Math.PI/4},
-             {x:-78,z:78,ry:-Math.PI*3/4},{x:78,z:78,ry:Math.PI*3/4}].forEach(p=>positions.push(p));
+            // North wall — full width
+            for(let x=-65;x<=65;x+=8){positions.push({x,z:-78,ry:Math.PI})}
+            // South wall — full width
+            for(let x=-65;x<=65;x+=8){positions.push({x,z:78,ry:0})}
+            // West wall — shorter, stop before N/S walls, skip road gap
+            for(let z=-55;z<=55;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
+            // East wall — shorter
+            for(let z=-55;z<=55;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -417,14 +421,23 @@
                 scene.add(c)});
         });
 
-        // 6 STATIC CARS parked along background roads
+        // PARKED CARS in front of boundary buildings (all 3 models)
+        const carPositions=[
+            // Along north wall (facing south)
+            {x:-40,z:-55,ry:Math.PI},{x:-15,z:-56,ry:Math.PI+.1},{x:20,z:-55,ry:Math.PI},{x:45,z:-56,ry:Math.PI-.1},
+            // Along south wall (facing north)
+            {x:-35,z:55,ry:0},{x:10,z:56,ry:.1},{x:35,z:55,ry:0},
+            // Along west wall
+            {x:-55,z:-30,ry:Math.PI/2},{x:-56,z:25,ry:Math.PI/2+.1},{x:-55,z:40,ry:Math.PI/2},
+            // Along east wall
+            {x:55,z:-25,ry:-Math.PI/2},{x:56,z:20,ry:-Math.PI/2},{x:55,z:40,ry:-Math.PI/2+.1}
+        ];
         carData.forEach((cd,idx)=>{
             loader.load(GLB_BASE+cd.file,g=>{
-                [{x:-85,z:20,ry:0},{x:85,z:-20,ry:Math.PI},{x:-20,z:-85,ry:Math.PI/2},{x:20,z:85,ry:-Math.PI/2},{x:-85,z:-30,ry:.3},{x:85,z:30,ry:-.3}]
-                .filter((_,i)=>i%3===idx).forEach(p=>{
+                carPositions.filter((_,i)=>i%3===idx).forEach(p=>{
                     const car=g.scene.clone();car.position.set(p.x,0,p.z);car.rotation.y=p.ry;
                     car.scale.set(cd.scale,cd.scale,cd.scale);
-                    car.traverse(c=>{if(c.isMesh){c.castShadow=false;c.receiveShadow=false}});
+                    car.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=false}});
                     scene.add(car);
                 });
             });
@@ -440,18 +453,21 @@
         const sl2=new THREE.SpotLight(0xD4AF37,.4);sl2.position.set(25,20,25);sl2.angle=Math.PI/5;sl2.penumbra=.7;scene.add(sl2);
 
         // === REALISTIC GROUND — ENTIRE WORLD ===
-        // One large ground plane so nothing floats
+        // Proper pavement/asphalt covering everything so nothing floats
         const worldGc=document.createElement('canvas');worldGc.width=512;worldGc.height=512;const wgx=worldGc.getContext('2d');
-        // Dark asphalt/concrete base
-        wgx.fillStyle='#1a1a1a';wgx.fillRect(0,0,512,512);
-        for(let i=0;i<30000;i++){const b=~~(Math.random()*25)+10;wgx.fillStyle=`rgba(${b},${b},${b},${Math.random()*.3})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
+        // Asphalt grey base (lighter than before to look like real pavement)
+        wgx.fillStyle='#222';wgx.fillRect(0,0,512,512);
+        for(let i=0;i<30000;i++){const b=~~(Math.random()*20)+18;wgx.fillStyle=`rgba(${b},${b},${b-1},${Math.random()*.3})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
         for(let i=0;i<30;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*60+10;
-            const gr=wgx.createRadialGradient(cx,cy,0,cx,cy,cr);const b=~~(Math.random()*12)+14;
-            gr.addColorStop(0,`rgba(${b+5},${b+4},${b+2},.25)`);gr.addColorStop(1,'transparent');wgx.fillStyle=gr;wgx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
-        const worldGt=new THREE.CanvasTexture(worldGc);worldGt.wrapS=worldGt.wrapT=THREE.RepeatWrapping;worldGt.repeat.set(12,12);
-        const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.95,metalness:.05});
-        const worldGround=new THREE.Mesh(new THREE.PlaneGeometry(600,600),worldGroundMat);
-        worldGround.rotation.x=-Math.PI/2;worldGround.position.y=-.05;worldGround.receiveShadow=true;scene.add(worldGround);
+            const gr=wgx.createRadialGradient(cx,cy,0,cx,cy,cr);const b=~~(Math.random()*10)+20;
+            gr.addColorStop(0,`rgba(${b+3},${b+2},${b},.2)`);gr.addColorStop(1,'transparent');wgx.fillStyle=gr;wgx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
+        // Cracks on world ground
+        wgx.strokeStyle='rgba(10,10,8,.3)';wgx.lineWidth=1;
+        for(let i=0;i<15;i++){wgx.beginPath();let cx=Math.random()*512,cy=Math.random()*512;wgx.moveTo(cx,cy);for(let j=0;j<4;j++){cx+=(Math.random()-.5)*40;cy+=(Math.random()-.5)*40;wgx.lineTo(cx,cy)}wgx.stroke()}
+        const worldGt=new THREE.CanvasTexture(worldGc);worldGt.wrapS=worldGt.wrapT=THREE.RepeatWrapping;worldGt.repeat.set(14,14);
+        const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.92,metalness:.05});
+        const worldGround=new THREE.Mesh(new THREE.PlaneGeometry(700,700),worldGroundMat);
+        worldGround.rotation.x=-Math.PI/2;worldGround.position.y=-.02;worldGround.receiveShadow=true;scene.add(worldGround);
 
         // === PLAYABLE ZONE GROUND (nicer concrete texture, slightly raised) ===
         const pgc=document.createElement('canvas');pgc.width=1024;pgc.height=1024;const pgx=pgc.getContext('2d');
@@ -496,6 +512,42 @@
         const swE=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,90),sidewalkMat.clone());
         swE.material.map=swt.clone();swE.material.map.repeat.set(1,8);
         swE.position.set(46.5,.09,0);swE.receiveShadow=true;scene.add(swE);
+
+        // === PAVEMENT FLOOR (tiled concrete between sidewalks and buildings) ===
+        // This fills the gap between zone edge (~48) and buildings (~78)
+        const pvC=document.createElement('canvas');pvC.width=512;pvC.height=512;const pvX=pvC.getContext('2d');
+        // Base concrete color
+        pvX.fillStyle='#2a2928';pvX.fillRect(0,0,512,512);
+        // Grain
+        for(let i=0;i<15000;i++){const b=~~(Math.random()*12)+30;pvX.fillStyle=`rgba(${b},${b},${b-1},${Math.random()*.2})`;pvX.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
+        // Grid lines (tile pattern like image 2)
+        pvX.strokeStyle='rgba(10,10,8,.6)';pvX.lineWidth=3;
+        for(let i=0;i<=8;i++){const v=i/8*512;pvX.beginPath();pvX.moveTo(v,0);pvX.lineTo(v,512);pvX.stroke();pvX.beginPath();pvX.moveTo(0,v);pvX.lineTo(512,v);pvX.stroke()}
+        // Subtle stains
+        for(let i=0;i<20;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*30+8;
+            const gr=pvX.createRadialGradient(cx,cy,0,cx,cy,cr);const v=~~(Math.random()*8)+24;
+            gr.addColorStop(0,`rgba(${v},${v-1},${v-2},.2)`);gr.addColorStop(1,'transparent');pvX.fillStyle=gr;pvX.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
+        const pvT=new THREE.CanvasTexture(pvC);pvT.wrapS=pvT.wrapT=THREE.RepeatWrapping;
+        // North pavement (between sidewalk at z=-48 and buildings at z=-78)
+        const pvMatN=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
+        pvMatN.map.repeat.set(6,2);
+        const pvN=new THREE.Mesh(new THREE.PlaneGeometry(100,28),pvMatN);
+        pvN.rotation.x=-Math.PI/2;pvN.position.set(0,.005,-62);pvN.receiveShadow=true;scene.add(pvN);
+        // South pavement
+        const pvMatS=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
+        pvMatS.map.repeat.set(6,2);
+        const pvS=new THREE.Mesh(new THREE.PlaneGeometry(100,28),pvMatS);
+        pvS.rotation.x=-Math.PI/2;pvS.position.set(0,.005,62);pvS.receiveShadow=true;scene.add(pvS);
+        // West pavement
+        const pvMatW=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
+        pvMatW.map.repeat.set(2,6);
+        const pvW=new THREE.Mesh(new THREE.PlaneGeometry(28,100),pvMatW);
+        pvW.rotation.x=-Math.PI/2;pvW.position.set(-62,.005,0);pvW.receiveShadow=true;scene.add(pvW);
+        // East pavement
+        const pvMatE=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
+        pvMatE.map.repeat.set(2,6);
+        const pvE=new THREE.Mesh(new THREE.PlaneGeometry(28,100),pvMatE);
+        pvE.rotation.x=-Math.PI/2;pvE.position.set(62,.005,0);pvE.receiveShadow=true;scene.add(pvE);
 
         // === CENTER STREET (horizontal, z=0) ===
         const sc=document.createElement('canvas');sc.width=512;sc.height=128;const sx=sc.getContext('2d');

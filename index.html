@@ -379,22 +379,21 @@
         extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(175,0,0);scene.add(extRoadR);
 
         // === CITY GLB MODELS ===
+        // city.glb at scale 25 is ~31 units wide. Center at ±85 means edges at ~70 minimum.
         const CITY1_SCALE=25;
         const CITY2_SCALE=8;
 
         loader.load(GLB_BASE+'city.glb',g=>{
             const positions=[];
-            // North rows
-            for(let x=-60;x<=60;x+=32){positions.push({x,z:-72,ry:Math.PI});positions.push({x,z:-95,ry:Math.PI})}
-            // South rows
-            for(let x=-60;x<=60;x+=32){positions.push({x,z:72,ry:0});positions.push({x,z:95,ry:0})}
-            // West rows (skip road)
-            for(let z=-50;z<=50;z+=25){if(Math.abs(z)<8)continue;positions.push({x:-72,z,ry:-Math.PI/2});positions.push({x:-95,z,ry:-Math.PI/2})}
-            // East rows (skip road)
-            for(let z=-50;z<=50;z+=25){if(Math.abs(z)<8)continue;positions.push({x:72,z,ry:Math.PI/2});positions.push({x:95,z,ry:Math.PI/2})}
-            // Along extended road sides (far out)
-            for(let x=-140;x<=-75;x+=32){positions.push({x,z:-10,ry:Math.PI});positions.push({x,z:10,ry:0})}
-            for(let x=75;x<=140;x+=32){positions.push({x,z:-10,ry:Math.PI});positions.push({x,z:10,ry:0})}
+            // North/South rows far out
+            for(let x=-60;x<=60;x+=32){positions.push({x,z:-85,ry:Math.PI});positions.push({x,z:-110,ry:Math.PI})}
+            for(let x=-60;x<=60;x+=32){positions.push({x,z:85,ry:0});positions.push({x,z:110,ry:0})}
+            // West/East rows (skip road |z|<10)
+            for(let z=-50;z<=50;z+=25){if(Math.abs(z)<10)continue;positions.push({x:-85,z,ry:-Math.PI/2});positions.push({x:-110,z,ry:-Math.PI/2})}
+            for(let z=-50;z<=50;z+=25){if(Math.abs(z)<10)continue;positions.push({x:85,z,ry:Math.PI/2});positions.push({x:110,z,ry:Math.PI/2})}
+            // Along road far out
+            for(let x=-150;x<=-90;x+=32){positions.push({x,z:-12,ry:Math.PI});positions.push({x,z:12,ry:0})}
+            for(let x=90;x<=150;x+=32){positions.push({x,z:-12,ry:Math.PI});positions.push({x,z:12,ry:0})}
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(CITY1_SCALE,CITY1_SCALE,CITY1_SCALE);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -404,8 +403,8 @@
 
         loader.load(GLB_BASE+'city2.glb',g=>{
             const positions=[];
-            for(let x=-80;x<=80;x+=40){positions.push({x,z:-115,ry:Math.PI});positions.push({x,z:115,ry:0})}
-            for(let z=-60;z<=60;z+=35){if(Math.abs(z)<10)continue;positions.push({x:-115,z,ry:-Math.PI/2});positions.push({x:115,z,ry:Math.PI/2})}
+            for(let x=-80;x<=80;x+=40){positions.push({x,z:-130,ry:Math.PI});positions.push({x,z:130,ry:0})}
+            for(let z=-60;z<=60;z+=35){if(Math.abs(z)<12)continue;positions.push({x:-130,z,ry:-Math.PI/2});positions.push({x:130,z,ry:Math.PI/2})}
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(CITY2_SCALE,CITY2_SCALE,CITY2_SCALE);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -416,13 +415,13 @@
         function loadFallbackCity(){
             const bC=[0x3a1a1a,0x2a1515,0x1a1218];
             function makeB(bx,bz,bw,bd,bh){
-                if(Math.abs(bx)<65&&Math.abs(bz)<65)return;
-                if(Math.abs(bz)<8)return;
+                if(Math.abs(bx)<70&&Math.abs(bz)<70)return;
+                if(Math.abs(bz)<10)return;
                 const m=new THREE.MeshStandardMaterial({color:bC[~~(Math.random()*bC.length)],roughness:.9});
                 const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),m);b.position.set(bx,bh/2,bz);scene.add(b);
             }
-            for(let x=-80;x<=80;x+=12){makeB(x,-72,8,6,8+Math.random()*10);makeB(x,72,8,6,8+Math.random()*10)}
-            for(let z=-50;z<=50;z+=12){if(Math.abs(z)<8)continue;makeB(-72,z,6,8,8+Math.random()*10);makeB(72,z,6,8,8+Math.random()*10)}
+            for(let x=-80;x<=80;x+=12){makeB(x,-85,8,6,8+Math.random()*10);makeB(x,85,8,6,8+Math.random()*10)}
+            for(let z=-50;z<=50;z+=12){if(Math.abs(z)<10)continue;makeB(-85,z,6,8,8+Math.random()*10);makeB(85,z,6,8,8+Math.random()*10)}
         }
 
         // === TRAFFIC CARS (drive along CENTER HORIZONTAL street only, z=0) ===
@@ -626,8 +625,14 @@
         // === CONTROLS ===
         const PLIM=44;
         const ray=new THREE.Raycaster(),mo=new THREE.Vector2();
-        function gp(e){mo.x=(e.clientX/innerWidth)*2-1;mo.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mo,camera);
-            const h=ray.intersectObjects(scene.children.filter(o=>o.name==='g'));return h.length?h[0].point:null}
+        const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0); // y=0 plane
+        function gp(e){
+            mo.x=(e.clientX/innerWidth)*2-1;mo.y=-(e.clientY/innerHeight)*2+1;
+            ray.setFromCamera(mo,camera);
+            const pt=new THREE.Vector3();
+            ray.ray.intersectPlane(groundPlane,pt);
+            return pt.y!==undefined?pt:null;
+        }
         cv.addEventListener('click',e=>{if(!gameActive)return;const pt=gp(e);if(!pt)return;
             if(placing){placeCasino({x:pt.x,z:pt.z})}else{
                 const cx=Math.max(-PLIM,Math.min(PLIM,pt.x)),cz=Math.max(-PLIM,Math.min(PLIM,pt.z));

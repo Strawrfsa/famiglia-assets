@@ -405,8 +405,8 @@
             for(let x=-70;x<=70;x+=8){positions.push({x,z:-78,ry:Math.PI})}
             for(let x=-70;x<=70;x+=8){positions.push({x,z:78,ry:0})}
             // E/W walls MUCH shorter (z:-40..40) so they never reach corners
-            for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
-            for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
+            for(let z=-25;z<=25;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
+            for(let z=-25;z<=25;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;

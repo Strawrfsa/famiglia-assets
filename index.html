@@ -396,17 +396,17 @@
         function onStreet(x,z){return Math.abs(z)<4.5}
 
         // ============================================================
-        // === BOUNDARY BUILDINGS — ±90, NO CORNER CROSSING ===
+        // === BOUNDARY BUILDINGS — ±78 (at sidewalk), NO CORNER CROSSING ===
         const BOUND=46;
         loader.load(GLB_BASE+'city.glb',g=>{
             const bScale=22;
             const positions=[];
             // N/S walls full width
-            for(let x=-70;x<=70;x+=8){positions.push({x,z:-90,ry:Math.PI})}
-            for(let x=-70;x<=70;x+=8){positions.push({x,z:90,ry:0})}
+            for(let x=-70;x<=70;x+=8){positions.push({x,z:-78,ry:Math.PI})}
+            for(let x=-70;x<=70;x+=8){positions.push({x,z:78,ry:0})}
             // E/W walls MUCH shorter (z:-40..40) so they never reach corners
-            for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-90,z,ry:-Math.PI/2})}
-            for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:90,z,ry:Math.PI/2})}
+            for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
+            for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
                 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -417,13 +417,13 @@
         // PARKED CARS in front of boundary buildings (all 3 models)
         const carPositions=[
             // Along north wall (facing south)
-            {x:-40,z:-65,ry:Math.PI},{x:-15,z:-66,ry:Math.PI+.1},{x:20,z:-65,ry:Math.PI},{x:45,z:-66,ry:Math.PI-.1},
+            {x:-40,z:-58,ry:Math.PI},{x:-15,z:-58,ry:Math.PI+.1},{x:20,z:-58,ry:Math.PI},{x:45,z:-58,ry:Math.PI-.1},
             // Along south wall (facing north)
-            {x:-35,z:65,ry:0},{x:10,z:66,ry:.1},{x:35,z:65,ry:0},
+            {x:-35,z:58,ry:0},{x:10,z:58,ry:.1},{x:35,z:58,ry:0},
             // Along west wall
-            {x:-65,z:-30,ry:Math.PI/2},{x:-66,z:25,ry:Math.PI/2+.1},{x:-65,z:40,ry:Math.PI/2},
+            {x:-58,z:-30,ry:Math.PI/2},{x:-58,z:25,ry:Math.PI/2+.1},{x:-58,z:40,ry:Math.PI/2},
             // Along east wall
-            {x:65,z:-25,ry:-Math.PI/2},{x:66,z:20,ry:-Math.PI/2},{x:65,z:40,ry:-Math.PI/2+.1}
+            {x:58,z:-25,ry:-Math.PI/2},{x:58,z:20,ry:-Math.PI/2},{x:58,z:40,ry:-Math.PI/2+.1}
         ];
         carData.forEach((cd,idx)=>{
             loader.load(GLB_BASE+cd.file,g=>{
@@ -524,23 +524,23 @@
         // North pavement (between sidewalk at z=-48 and buildings at z=-78)
         const pvMatN=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
         pvMatN.map.repeat.set(6,2);
-        const pvN=new THREE.Mesh(new THREE.PlaneGeometry(120,38),pvMatN);
-        pvN.rotation.x=-Math.PI/2;pvN.position.set(0,.005,-67);pvN.receiveShadow=true;scene.add(pvN);
+        const pvN=new THREE.Mesh(new THREE.PlaneGeometry(100,28),pvMatN);
+        pvN.rotation.x=-Math.PI/2;pvN.position.set(0,.005,-62);pvN.receiveShadow=true;scene.add(pvN);
         // South pavement
         const pvMatS=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
         pvMatS.map.repeat.set(6,2);
-        const pvS=new THREE.Mesh(new THREE.PlaneGeometry(120,38),pvMatS);
-        pvS.rotation.x=-Math.PI/2;pvS.position.set(0,.005,67);pvS.receiveShadow=true;scene.add(pvS);
+        const pvS=new THREE.Mesh(new THREE.PlaneGeometry(100,28),pvMatS);
+        pvS.rotation.x=-Math.PI/2;pvS.position.set(0,.005,62);pvS.receiveShadow=true;scene.add(pvS);
         // West pavement
         const pvMatW=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
         pvMatW.map.repeat.set(2,6);
-        const pvW=new THREE.Mesh(new THREE.PlaneGeometry(38,120),pvMatW);
-        pvW.rotation.x=-Math.PI/2;pvW.position.set(-67,.005,0);pvW.receiveShadow=true;scene.add(pvW);
+        const pvW=new THREE.Mesh(new THREE.PlaneGeometry(28,100),pvMatW);
+        pvW.rotation.x=-Math.PI/2;pvW.position.set(-62,.005,0);pvW.receiveShadow=true;scene.add(pvW);
         // East pavement
         const pvMatE=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
         pvMatE.map.repeat.set(2,6);
-        const pvE=new THREE.Mesh(new THREE.PlaneGeometry(38,120),pvMatE);
-        pvE.rotation.x=-Math.PI/2;pvE.position.set(67,.005,0);pvE.receiveShadow=true;scene.add(pvE);
+        const pvE=new THREE.Mesh(new THREE.PlaneGeometry(28,100),pvMatE);
+        pvE.rotation.x=-Math.PI/2;pvE.position.set(62,.005,0);pvE.receiveShadow=true;scene.add(pvE);
 
         // === CENTER STREET (horizontal, z=0) ===
         const sc=document.createElement('canvas');sc.width=512;sc.height=128;const sx=sc.getContext('2d');
@@ -558,14 +558,14 @@
 
         // === BACKGROUND ROADS (behind buildings at ±82) ===
         const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(180,6),sm.clone());
-        bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-92);scene.add(bgRoadN);
+        bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-86);scene.add(bgRoadN);
         const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(180,6),sm.clone());
-        bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,92);scene.add(bgRoadS);
+        bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,86);scene.add(bgRoadS);
         const bgSmV=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
         const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(6,180),bgSmV);
-        bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-92,.01,0);scene.add(bgRoadW);
+        bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-86,.01,0);scene.add(bgRoadW);
         const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(6,180),bgSmV.clone());
-        bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(92,.01,0);scene.add(bgRoadE);
+        bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(86,.01,0);scene.add(bgRoadE);
         // Extended center road through road gap
         const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
         extRoadL.rotation.x=-Math.PI/2;extRoadL.position.set(-145,.01,0);scene.add(extRoadL);
@@ -576,10 +576,10 @@
         loader.load(GLB_BASE+'city2.glb',g=>{
             const sc=9;
             const positions=[
-                {x:-50,z:-98,ry:Math.PI},{x:-20,z:-98,ry:Math.PI},{x:10,z:-98,ry:Math.PI},{x:40,z:-98,ry:Math.PI},
-                {x:-50,z:98,ry:0},{x:-20,z:98,ry:0},{x:10,z:98,ry:0},{x:40,z:98,ry:0},
-                {x:-98,z:-45,ry:-Math.PI/2},{x:-98,z:0,ry:-Math.PI/2},{x:-98,z:45,ry:-Math.PI/2},
-                {x:98,z:-45,ry:Math.PI/2},{x:98,z:0,ry:Math.PI/2},{x:98,z:45,ry:Math.PI/2}
+                {x:-50,z:-92,ry:Math.PI},{x:-20,z:-92,ry:Math.PI},{x:10,z:-92,ry:Math.PI},{x:40,z:-92,ry:Math.PI},
+                {x:-50,z:92,ry:0},{x:-20,z:92,ry:0},{x:10,z:92,ry:0},{x:40,z:92,ry:0},
+                {x:-92,z:-45,ry:-Math.PI/2},{x:-92,z:0,ry:-Math.PI/2},{x:-92,z:45,ry:-Math.PI/2},
+                {x:92,z:-45,ry:Math.PI/2},{x:92,z:0,ry:Math.PI/2},{x:92,z:45,ry:Math.PI/2}
             ];
             positions.forEach(p=>{
                 const c=g.scene.clone();c.scale.set(sc,sc,sc);

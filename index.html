@@ -513,14 +513,22 @@ groundTop.rotation.x=-Math.PI/2;groundTop.position.set(0,.01,23.5);groundTop.rec
 const groundBot=new THREE.Mesh(new THREE.PlaneGeometry(90,42),playGroundMat);
 groundBot.rotation.x=-Math.PI/2;groundBot.position.set(0,.01,-23.5);groundBot.receiveShadow=true;groundBot.name='g';scene.add(groundBot);
 
-// === SIDEWALKS (concrete curbs around playable zone edges) ===
-const swc=document.createElement('canvas');swc.width=256;swc.height=256;const swx=swc.getContext('2d');
-swx.fillStyle='#2a2a28';swx.fillRect(0,0,256,256);
-for(let i=0;i<5000;i++){const b=~~(Math.random()*15)+30;swx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.25})`;swx.fillRect(Math.random()*256,Math.random()*256,Math.random()*2+.5,Math.random()*2+.5)}
-swx.strokeStyle='rgba(15,15,12,.5)';swx.lineWidth=2;
-for(let i=0;i<=4;i++){const v=i/4*256;swx.beginPath();swx.moveTo(v,0);swx.lineTo(v,256);swx.stroke();swx.beginPath();swx.moveTo(0,v);swx.lineTo(256,v);swx.stroke()}
-const swt=new THREE.CanvasTexture(swc);swt.wrapS=swt.wrapT=THREE.RepeatWrapping;swt.repeat.set(8,1);
-const sidewalkMat=new THREE.MeshStandardMaterial({map:swt,roughness:.88,metalness:.02});
+// === SIDEWALKS (realistic concrete curbs) ===
+const swc=document.createElement('canvas');swc.width=512;swc.height=128;const swx=swc.getContext('2d');
+// Concrete base — slightly lighter than ground
+swx.fillStyle='#383634';swx.fillRect(0,0,512,128);
+// Fine grain
+for(let i=0;i<8000;i++){const b=~~(Math.random()*18)+40;swx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.15})`;swx.fillRect(Math.random()*512,Math.random()*128,Math.random()*2+.5,Math.random()*1.5+.5)}
+// Subtle edge highlight (curb top)
+swx.fillStyle='rgba(70,68,62,.4)';swx.fillRect(0,0,512,3);swx.fillRect(0,125,512,3);
+// Hairline expansion joints every ~5m
+swx.strokeStyle='rgba(20,18,15,.5)';swx.lineWidth=1;
+for(let i=1;i<6;i++){const xx=i/6*512;swx.beginPath();swx.moveTo(xx,0);swx.lineTo(xx,128);swx.stroke()}
+// Wear marks
+for(let i=0;i<8;i++){const cx=Math.random()*512,cy=Math.random()*128,cr=Math.random()*20+5;
+const gr=swx.createRadialGradient(cx,cy,0,cx,cy,cr);gr.addColorStop(0,'rgba(45,43,38,.25)');gr.addColorStop(1,'transparent');swx.fillStyle=gr;swx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
+const swt=new THREE.CanvasTexture(swc);swt.wrapS=swt.wrapT=THREE.RepeatWrapping;swt.repeat.set(6,1);
+const sidewalkMat=new THREE.MeshStandardMaterial({map:swt,roughness:.85,metalness:.02});
 // North sidewalk
 const swN=new THREE.Mesh(new THREE.BoxGeometry(92,0.18,3),sidewalkMat);
 swN.position.set(0,.09,-46.5);swN.receiveShadow=true;scene.add(swN);
@@ -552,26 +560,35 @@ sx.fillStyle='#DAA520';
 for(let i=0;i<512;i+=40){sx.fillRect(i,60,25,4);sx.fillRect(i,64,25,4)}
 sx.fillStyle='rgba(255,255,255,.5)';
 sx.fillRect(0,4,512,2);sx.fillRect(0,122,512,2);
-const st=new THREE.CanvasTexture(sc);st.wrapS=st.wrapT=THREE.RepeatWrapping;st.repeat.set(8,1);
+const st=new THREE.CanvasTexture(sc);st.wrapS=st.wrapT=THREE.RepeatWrapping;st.repeat.set(3.6,1);
 const sm=new THREE.MeshStandardMaterial({map:st,roughness:.9,metalness:.05});
 const centerStreet=new THREE.Mesh(new THREE.PlaneGeometry(90,5),sm);
 centerStreet.rotation.x=-Math.PI/2;centerStreet.position.set(0,.02,0);
 centerStreet.receiveShadow=true;centerStreet.name='g';scene.add(centerStreet);
 
-// === BACKGROUND ROADS (behind buildings at ±82) ===
-const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(180,6),sm.clone());
-bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.01,-96);scene.add(bgRoadN);
-const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(180,6),sm.clone());
-bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.01,96);scene.add(bgRoadS);
+// === SIDE ROADS (visible through building gaps) ===
+// N/S roads at ±88 (at building line, visible from above)
+const bgRNm=sm.clone();bgRNm.map=st.clone();bgRNm.map.repeat.set(8,1);
+const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(200,8),bgRNm);
+bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.015,-88);scene.add(bgRoadN);
+const bgRSm=sm.clone();bgRSm.map=st.clone();bgRSm.map.repeat.set(8,1);
+const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(200,8),bgRSm);
+bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.015,88);scene.add(bgRoadS);
+// E/W side roads — vertical, at ±88
 const bgSmV=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
-const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(6,180),bgSmV);
-bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-96,.01,0);scene.add(bgRoadW);
-const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(6,180),bgSmV.clone());
-bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(96,.01,0);scene.add(bgRoadE);
+bgSmV.map.repeat.set(1,3.6);bgSmV.map.rotation=Math.PI/2;bgSmV.map.center.set(.5,.5);
+const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(8,200),bgSmV);
+bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-88,.015,0);scene.add(bgRoadW);
+const bgSmV2=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
+bgSmV2.map.repeat.set(1,3.6);bgSmV2.map.rotation=Math.PI/2;bgSmV2.map.center.set(.5,.5);
+const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(8,200),bgSmV2);
+bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(88,.015,0);scene.add(bgRoadE);
 // Extended center road through road gap
-const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
+const extRoadLm=sm.clone();extRoadLm.map=st.clone();extRoadLm.map.repeat.set(8,1);
+const extRoadL=new THREE.Mesh(new THREE.PlaneGeometry(200,5),extRoadLm);
 extRoadL.rotation.x=-Math.PI/2;extRoadL.position.set(-145,.01,0);scene.add(extRoadL);
-const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),sm.clone());
+const extRoadRm=sm.clone();extRoadRm.map=st.clone();extRoadRm.map.repeat.set(8,1);
+const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),extRoadRm);
 extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoadR);
 
 // === CITY2 BUILDINGS (closer behind boundary) ===

@@ -406,11 +406,11 @@ const positions=[];
 // N/S walls (x:-56..56, step 8)
 for(let x=-56;x<=56;x+=8){positions.push({x,z:-88,ry:Math.PI})}
 for(let x=-56;x<=56;x+=8){positions.push({x,z:88,ry:0})}
-// E/W walls ASYMMETRIC — long tail goes INWARD, never into background
-// E wall (ry=PI/2): tail goes +Z → safe z: -40 to 16
-// W wall (ry=-PI/2): tail goes -Z → safe z: -16 to 40
-for(let z=-40;z<=16;z+=8){if(Math.abs(z)<8)continue;positions.push({x:88,z,ry:Math.PI/2})}
-for(let z=-16;z<=40;z+=8){if(Math.abs(z)<8)continue;positions.push({x:-88,z,ry:-Math.PI/2})}
+// E/W walls — ONLY positions that DON'T cross road (z=-2.5 to 2.5)
+// E (ry=PI/2, tail +Z): z=-40,-32 (north half), z=8,16 (south half)
+// W (ry=-PI/2, tail -Z): z=-16,-8 (north half), z=32,40 (south half)
+[-40,-32,8,16].forEach(z=>{positions.push({x:88,z,ry:Math.PI/2})});
+[-16,-8,32,40].forEach(z=>{positions.push({x:-88,z,ry:-Math.PI/2})});
 positions.forEach(p=>{
 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
@@ -501,14 +501,20 @@ swN.position.set(0,.09,-46.5);swN.receiveShadow=true;scene.add(swN);
 // South sidewalk
 const swS=new THREE.Mesh(new THREE.BoxGeometry(92,0.18,3),sidewalkMat);
 swS.position.set(0,.09,46.5);swS.receiveShadow=true;scene.add(swS);
-// West sidewalk
-const swW=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,90),sidewalkMat.clone());
-swW.material.map=swt.clone();swW.material.map.repeat.set(1,8);
-swW.position.set(-46.5,.09,0);swW.receiveShadow=true;scene.add(swW);
-// East sidewalk
-const swE=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,90),sidewalkMat.clone());
-swE.material.map=swt.clone();swE.material.map.repeat.set(1,8);
-swE.position.set(46.5,.09,0);swE.receiveShadow=true;scene.add(swE);
+// West sidewalk — split around road
+const swW1=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,40),sidewalkMat.clone());
+swW1.material.map=swt.clone();swW1.material.map.repeat.set(1,4);
+swW1.position.set(-46.5,.09,-25);swW1.receiveShadow=true;scene.add(swW1);
+const swW2=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,40),sidewalkMat.clone());
+swW2.material.map=swt.clone();swW2.material.map.repeat.set(1,4);
+swW2.position.set(-46.5,.09,25);swW2.receiveShadow=true;scene.add(swW2);
+// East sidewalk — split around road
+const swE1=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,40),sidewalkMat.clone());
+swE1.material.map=swt.clone();swE1.material.map.repeat.set(1,4);
+swE1.position.set(46.5,.09,-25);swE1.receiveShadow=true;scene.add(swE1);
+const swE2=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,40),sidewalkMat.clone());
+swE2.material.map=swt.clone();swE2.material.map.repeat.set(1,4);
+swE2.position.set(46.5,.09,25);swE2.receiveShadow=true;scene.add(swE2);
 
 // === PAVEMENT FLOOR (tiled concrete between sidewalks and buildings) ===
 // This fills the gap between zone edge (~48) and buildings (~78)

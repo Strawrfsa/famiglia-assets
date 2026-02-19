@@ -403,9 +403,11 @@ const BOUND=46;
 loader.load(GLB_BASE+'city.glb',g=>{
 const bScale=26;
 const positions=[];
-// N/S walls (x:-56..56, step 8)
-for(let x=-56;x<=56;x+=8){positions.push({x,z:-88,ry:Math.PI})}
-for(let x=-56;x<=56;x+=8){positions.push({x,z:88,ry:0})}
+// N/S walls — ZERO background overflow on all 4 corners
+// N wall (ry=PI, tail +X): x: -40 to 16
+// S wall (ry=0, tail -X): x: -16 to 40
+for(let x=-40;x<=16;x+=8){positions.push({x,z:-88,ry:Math.PI})}
+for(let x=-16;x<=40;x+=8){positions.push({x,z:88,ry:0})}
 // E/W walls — ONLY positions that DON'T cross road (z=-2.5 to 2.5)
 // E (ry=PI/2, tail +Z): z=-40,-32 (north half), z=8,16 (south half)
 // W (ry=-PI/2, tail -Z): z=-16,-8 (north half), z=32,40 (south half)

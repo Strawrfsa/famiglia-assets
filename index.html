@@ -396,19 +396,21 @@ const carData=[
 function onStreet(x,z){return Math.abs(z)<4.5}
 
 // ============================================================
-// === BOUNDARY BUILDINGS — ±78 (at sidewalk), NO CORNER CROSSING ===
+// === BOUNDARY BUILDINGS — WALL AT ZONE EDGE, NO CROSSING ===
+// At scale 22, model front face is 35.57 units from center.
+// Centers at ±82 → front face at ±(82-35.57) = ±46.43 ≈ sidewalk at ±46.5
+// E/W z limited to ±22 — can NEVER reach N/S front face at ±46.43
+// Duplicates removed.
 const BOUND=46;
 loader.load(GLB_BASE+'city.glb',g=>{
 const bScale=22;
 const positions=[];
-// N/S walls full width
-for(let x=-70;x<=70;x+=8){positions.push({x,z:-78,ry:Math.PI})}
-for(let x=-70;x<=70;x+=8){positions.push({x,z:78,ry:0})}
-// E/W walls MUCH shorter (z:-40..40) so they never reach corners
-for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
-for(let z=-40;z<=40;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
-for(let z=-25;z<=25;z+=8){if(Math.abs(z)<14)continue;positions.push({x:-78,z,ry:-Math.PI/2})}
-for(let z=-25;z<=25;z+=8){if(Math.abs(z)<14)continue;positions.push({x:78,z,ry:Math.PI/2})}
+// N/S walls (x:-48..48, step 8)
+for(let x=-48;x<=48;x+=8){positions.push({x,z:-82,ry:Math.PI})}
+for(let x=-48;x<=48;x+=8){positions.push({x,z:82,ry:0})}
+// E/W walls (z:-22..22, step 4, skip road gap)
+for(let z=-22;z<=22;z+=4){if(Math.abs(z)<6)continue;positions.push({x:-82,z,ry:-Math.PI/2})}
+for(let z=-22;z<=22;z+=4){if(Math.abs(z)<6)continue;positions.push({x:82,z,ry:Math.PI/2})}
 positions.forEach(p=>{
 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;

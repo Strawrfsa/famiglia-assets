@@ -575,14 +575,24 @@ bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.015,-88);scene.add(bgRoadN
 const bgRSm=sm.clone();bgRSm.map=st.clone();bgRSm.map.repeat.set(8,1);
 const bgRoadS=new THREE.Mesh(new THREE.PlaneGeometry(200,8),bgRSm);
 bgRoadS.rotation.x=-Math.PI/2;bgRoadS.position.set(0,.015,88);scene.add(bgRoadS);
-// E/W side roads — vertical, at ±88
-const bgSmV=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
-bgSmV.map.repeat.set(1,3.6);bgSmV.map.rotation=Math.PI/2;bgSmV.map.center.set(.5,.5);
-const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(8,200),bgSmV);
+// E/W side roads — proper vertical road texture
+const vc=document.createElement('canvas');vc.width=128;vc.height=512;const vx=vc.getContext('2d');
+vx.fillStyle='#141414';vx.fillRect(0,0,128,512);
+for(let i=0;i<6000;i++){const b=~~(Math.random()*20)+8;vx.fillStyle=`rgba(${b},${b},${b},${Math.random()*.4})`;vx.fillRect(Math.random()*128,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
+// Center dashes (vertical)
+vx.fillStyle='#DAA520';
+for(let i=0;i<512;i+=40){vx.fillRect(60,i,8,25)}
+// Edge lines
+vx.fillStyle='rgba(255,255,255,.5)';
+vx.fillRect(4,0,2,512);vx.fillRect(122,0,2,512);
+const vt=new THREE.CanvasTexture(vc);vt.wrapS=vt.wrapT=THREE.RepeatWrapping;
+const bgWm=new THREE.MeshStandardMaterial({map:vt.clone(),roughness:.9,metalness:.05});
+bgWm.map.repeat.set(1,8);
+const bgRoadW=new THREE.Mesh(new THREE.PlaneGeometry(8,200),bgWm);
 bgRoadW.rotation.x=-Math.PI/2;bgRoadW.position.set(-88,.015,0);scene.add(bgRoadW);
-const bgSmV2=new THREE.MeshStandardMaterial({map:st.clone(),roughness:.9,metalness:.05});
-bgSmV2.map.repeat.set(1,3.6);bgSmV2.map.rotation=Math.PI/2;bgSmV2.map.center.set(.5,.5);
-const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(8,200),bgSmV2);
+const bgEm=new THREE.MeshStandardMaterial({map:vt.clone(),roughness:.9,metalness:.05});
+bgEm.map.repeat.set(1,8);
+const bgRoadE=new THREE.Mesh(new THREE.PlaneGeometry(8,200),bgEm);
 bgRoadE.rotation.x=-Math.PI/2;bgRoadE.position.set(88,.015,0);scene.add(bgRoadE);
 // Extended center road through road gap
 const extRoadLm=sm.clone();extRoadLm.map=st.clone();extRoadLm.map.repeat.set(8,1);
@@ -592,14 +602,19 @@ const extRoadRm=sm.clone();extRoadRm.map=st.clone();extRoadRm.map.repeat.set(8,1
 const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),extRoadRm);
 extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoadR);
 
-// === CITY2 BUILDINGS (closer behind boundary) ===
+// === CITY2 BUILDINGS (behind boundary, closer) ===
 loader.load(GLB_BASE+'city2.glb',g=>{
 const sc=9;
 const positions=[
-{x:-50,z:-102,ry:Math.PI},{x:-20,z:-102,ry:Math.PI},{x:10,z:-102,ry:Math.PI},{x:40,z:-102,ry:Math.PI},
-{x:-50,z:102,ry:0},{x:-20,z:102,ry:0},{x:10,z:102,ry:0},{x:40,z:102,ry:0},
-{x:-102,z:-45,ry:-Math.PI/2},{x:-102,z:45,ry:-Math.PI/2},
-{x:102,z:-45,ry:Math.PI/2},{x:102,z:45,ry:Math.PI/2}
+// N/S rows
+{x:-50,z:-96,ry:Math.PI},{x:-20,z:-96,ry:Math.PI},{x:10,z:-96,ry:Math.PI},{x:40,z:-96,ry:Math.PI},
+{x:-50,z:96,ry:0},{x:-20,z:96,ry:0},{x:10,z:96,ry:0},{x:40,z:96,ry:0},
+// E/W sides (not on center road)
+{x:-96,z:-40,ry:-Math.PI/2},{x:-96,z:40,ry:-Math.PI/2},
+{x:96,z:-40,ry:Math.PI/2},{x:96,z:40,ry:Math.PI/2},
+// Intersection corners (diagonal from road crossings)
+{x:-96,z:-96,ry:-Math.PI/2},{x:96,z:-96,ry:Math.PI/2},
+{x:-96,z:96,ry:-Math.PI/2},{x:96,z:96,ry:Math.PI/2}
 ];
 positions.forEach(p=>{
 const c=g.scene.clone();c.scale.set(sc,sc,sc);

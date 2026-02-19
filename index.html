@@ -227,6 +227,33 @@ else{music.play().catch(()=>{});musicPlaying=true;document.getElementById('music
 const gunshotSfx=new Audio(GLB_BASE+'gunshot.wav');
 gunshotSfx.volume=0.5;
 
+// === FOOTSTEP SOUNDS (procedural) ===
+let stepCtx=null;
+let lastStepTime=0;
+const STEP_INTERVAL=280;
+function playFootstep(){
+const now=Date.now();
+if(now-lastStepTime<STEP_INTERVAL)return;
+lastStepTime=now;
+if(!stepCtx)stepCtx=new(window.AudioContext||window.webkitAudioContext)();
+const t=stepCtx.currentTime;
+const buf=stepCtx.createBuffer(1,stepCtx.sampleRate*0.08,stepCtx.sampleRate);
+const d=buf.getChannelData(0);
+for(let i=0;i<d.length;i++){
+const p=i/d.length;
+d[i]=(Math.random()*2-1)*Math.exp(-p*12)*0.3;
+if(p<0.05)d[i]+=Math.sin(p*800)*Math.exp(-p*20)*0.4;
+}
+const src=stepCtx.createBufferSource();src.buffer=buf;
+const gain=stepCtx.createGain();
+gain.gain.setValueAtTime(0.12+Math.random()*0.04,t);
+gain.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+const filt=stepCtx.createBiquadFilter();
+filt.type='lowpass';filt.frequency.value=800+Math.random()*400;
+src.connect(filt);filt.connect(gain);gain.connect(stepCtx.destination);
+src.start(t);src.stop(t+0.08);
+}
+
 // === SHOOTING & EXPLOSIONS ===
 let bullets=[],explosions=[];
 let lastShotTime=0;
@@ -655,16 +682,6 @@ t.add(M(new THREE.CylinderGeometry(.28,.28,.05,8),metalDark,0,.72,0));
 t.position.set(tx,0,tz);scene.add(t);
 });
 
-// MANHOLES — on ALL streets
-const manholeMat=new THREE.MeshStandardMaterial({color:0x222,metalness:.8,roughness:.3});
-const manholeRing=new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:.9,roughness:.2});
-[[-20,0],[20,0],[0,0],[-40,0],[40,0],[-20,-96],[20,-96],[-20,96],[20,96],[-96,-10],[-96,10],[96,-10],[96,10]].forEach(([mx,mz])=>{
-const mh=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.04,16),manholeMat);
-mh.position.set(mx,.03,mz);scene.add(mh);
-const ring=new THREE.Mesh(new THREE.RingGeometry(.35,.5,16),manholeRing);
-ring.rotation.x=-Math.PI/2;ring.position.set(mx,.05,mz);scene.add(ring);
-});
-
 // PUDDLES — inside
 const puddleMat=new THREE.MeshStandardMaterial({color:0x111,metalness:.95,roughness:.05,transparent:true,opacity:.4});
 [[-15,15,2],[10,-20,1.5],[30,25,1.8],[-25,-15,1.2],[5,35,2.2]].forEach(([px,pz,pr])=>{
@@ -931,6 +948,7 @@ player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
 player.mk.position.set(player.position.x,.05,player.position.z);
 player.gl.position.set(player.position.x,.03,player.position.z);
 player.rotation.y=Math.atan2(dx,dz);player.position.y=Math.sin(t*8)*.08;
+playFootstep();
 }else{moving=false;player.position.y=0;removeWP()}}
 if(player.mk)player.mk.material.opacity=.35+Math.sin(t*3)*.2;
 camera.position.x+=(player.position.x-camera.position.x)*.05;

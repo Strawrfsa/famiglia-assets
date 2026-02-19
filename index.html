@@ -478,20 +478,17 @@ const moon=new THREE.DirectionalLight(0x8888cc,.25);moon.position.set(-20,40,-20
 const sl=new THREE.SpotLight(0x8B0000,.5);sl.position.set(-25,20,-25);sl.angle=Math.PI/5;sl.penumbra=.7;scene.add(sl);
 const sl2=new THREE.SpotLight(0xD4AF37,.4);sl2.position.set(25,20,25);sl2.angle=Math.PI/5;sl2.penumbra=.7;scene.add(sl2);
 
-// === REALISTIC GROUND — ENTIRE WORLD ===
-// Proper pavement/asphalt covering everything so nothing floats
+// === WORLD GROUND — TILED PAVEMENT EVERYWHERE ===
 const worldGc=document.createElement('canvas');worldGc.width=512;worldGc.height=512;const wgx=worldGc.getContext('2d');
-// Asphalt grey base (lighter than before to look like real pavement)
-wgx.fillStyle='#222';wgx.fillRect(0,0,512,512);
-for(let i=0;i<30000;i++){const b=~~(Math.random()*20)+18;wgx.fillStyle=`rgba(${b},${b},${b-1},${Math.random()*.3})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
-for(let i=0;i<30;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*60+10;
-const gr=wgx.createRadialGradient(cx,cy,0,cx,cy,cr);const b=~~(Math.random()*10)+20;
-gr.addColorStop(0,`rgba(${b+3},${b+2},${b},.2)`);gr.addColorStop(1,'transparent');wgx.fillStyle=gr;wgx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
-// Cracks on world ground
-wgx.strokeStyle='rgba(10,10,8,.3)';wgx.lineWidth=1;
-for(let i=0;i<15;i++){wgx.beginPath();let cx=Math.random()*512,cy=Math.random()*512;wgx.moveTo(cx,cy);for(let j=0;j<4;j++){cx+=(Math.random()-.5)*40;cy+=(Math.random()-.5)*40;wgx.lineTo(cx,cy)}wgx.stroke()}
-const worldGt=new THREE.CanvasTexture(worldGc);worldGt.wrapS=worldGt.wrapT=THREE.RepeatWrapping;worldGt.repeat.set(14,14);
-const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.92,metalness:.05});
+wgx.fillStyle='#2a2928';wgx.fillRect(0,0,512,512);
+for(let i=0;i<15000;i++){const b=~~(Math.random()*12)+30;wgx.fillStyle=`rgba(${b},${b},${b-1},${Math.random()*.2})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
+wgx.strokeStyle='rgba(10,10,8,.5)';wgx.lineWidth=3;
+for(let i=0;i<=8;i++){const v=i/8*512;wgx.beginPath();wgx.moveTo(v,0);wgx.lineTo(v,512);wgx.stroke();wgx.beginPath();wgx.moveTo(0,v);wgx.lineTo(512,v);wgx.stroke()}
+for(let i=0;i<15;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*25+8;
+const gr=wgx.createRadialGradient(cx,cy,0,cx,cy,cr);const v=~~(Math.random()*8)+24;
+gr.addColorStop(0,`rgba(${v},${v-1},${v-2},.15)`);gr.addColorStop(1,'transparent');wgx.fillStyle=gr;wgx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
+const worldGt=new THREE.CanvasTexture(worldGc);worldGt.wrapS=worldGt.wrapT=THREE.RepeatWrapping;worldGt.repeat.set(20,20);
+const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.88,metalness:.03});
 const worldGround=new THREE.Mesh(new THREE.PlaneGeometry(700,700),worldGroundMat);
 worldGround.rotation.x=-Math.PI/2;worldGround.position.y=-.02;worldGround.receiveShadow=true;scene.add(worldGround);
 
@@ -545,41 +542,7 @@ const swE2=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,40),sidewalkMat.clone());
 swE2.material.map=swt.clone();swE2.material.map.repeat.set(1,4);
 swE2.position.set(46.5,.09,25);swE2.receiveShadow=true;scene.add(swE2);
 
-// === PAVEMENT FLOOR (tiled concrete between sidewalks and buildings) ===
-// This fills the gap between zone edge (~48) and buildings (~78)
-const pvC=document.createElement('canvas');pvC.width=512;pvC.height=512;const pvX=pvC.getContext('2d');
-// Base concrete color
-pvX.fillStyle='#2a2928';pvX.fillRect(0,0,512,512);
-// Grain
-for(let i=0;i<15000;i++){const b=~~(Math.random()*12)+30;pvX.fillStyle=`rgba(${b},${b},${b-1},${Math.random()*.2})`;pvX.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
-// Grid lines (tile pattern like image 2)
-pvX.strokeStyle='rgba(10,10,8,.6)';pvX.lineWidth=3;
-for(let i=0;i<=8;i++){const v=i/8*512;pvX.beginPath();pvX.moveTo(v,0);pvX.lineTo(v,512);pvX.stroke();pvX.beginPath();pvX.moveTo(0,v);pvX.lineTo(512,v);pvX.stroke()}
-// Subtle stains
-for(let i=0;i<20;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*30+8;
-const gr=pvX.createRadialGradient(cx,cy,0,cx,cy,cr);const v=~~(Math.random()*8)+24;
-gr.addColorStop(0,`rgba(${v},${v-1},${v-2},.2)`);gr.addColorStop(1,'transparent');pvX.fillStyle=gr;pvX.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
-const pvT=new THREE.CanvasTexture(pvC);pvT.wrapS=pvT.wrapT=THREE.RepeatWrapping;
-// North pavement (between sidewalk at z=-48 and buildings at z=-78)
-const pvMatN=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
-pvMatN.map.repeat.set(6,2);
-const pvN=new THREE.Mesh(new THREE.PlaneGeometry(100,36),pvMatN);
-pvN.rotation.x=-Math.PI/2;pvN.position.set(0,.005,-66);pvN.receiveShadow=true;scene.add(pvN);
-// South pavement
-const pvMatS=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
-pvMatS.map.repeat.set(6,2);
-const pvS=new THREE.Mesh(new THREE.PlaneGeometry(100,36),pvMatS);
-pvS.rotation.x=-Math.PI/2;pvS.position.set(0,.005,66);pvS.receiveShadow=true;scene.add(pvS);
-// West pavement
-const pvMatW=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
-pvMatW.map.repeat.set(2,6);
-const pvW=new THREE.Mesh(new THREE.PlaneGeometry(36,100),pvMatW);
-pvW.rotation.x=-Math.PI/2;pvW.position.set(-66,.005,0);pvW.receiveShadow=true;scene.add(pvW);
-// East pavement
-const pvMatE=new THREE.MeshStandardMaterial({map:pvT.clone(),roughness:.88,metalness:.03});
-pvMatE.map.repeat.set(2,6);
-const pvE=new THREE.Mesh(new THREE.PlaneGeometry(36,100),pvMatE);
-pvE.rotation.x=-Math.PI/2;pvE.position.set(66,.005,0);pvE.receiveShadow=true;scene.add(pvE);
+
 
 // === CENTER STREET (horizontal, z=0) ===
 const sc=document.createElement('canvas');sc.width=512;sc.height=128;const sx=sc.getContext('2d');

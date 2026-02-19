@@ -478,17 +478,18 @@ const moon=new THREE.DirectionalLight(0x8888cc,.25);moon.position.set(-20,40,-20
 const sl=new THREE.SpotLight(0x8B0000,.5);sl.position.set(-25,20,-25);sl.angle=Math.PI/5;sl.penumbra=.7;scene.add(sl);
 const sl2=new THREE.SpotLight(0xD4AF37,.4);sl2.position.set(25,20,25);sl2.angle=Math.PI/5;sl2.penumbra=.7;scene.add(sl2);
 
-// === WORLD GROUND — TILED PAVEMENT EVERYWHERE ===
+// === WORLD GROUND — REALISTIC CONCRETE (same as sidewalk) ===
 const worldGc=document.createElement('canvas');worldGc.width=512;worldGc.height=512;const wgx=worldGc.getContext('2d');
-wgx.fillStyle='#2a2928';wgx.fillRect(0,0,512,512);
-for(let i=0;i<15000;i++){const b=~~(Math.random()*12)+30;wgx.fillStyle=`rgba(${b},${b},${b-1},${Math.random()*.2})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*2+.5)}
-wgx.strokeStyle='rgba(10,10,8,.5)';wgx.lineWidth=3;
-for(let i=0;i<=8;i++){const v=i/8*512;wgx.beginPath();wgx.moveTo(v,0);wgx.lineTo(v,512);wgx.stroke();wgx.beginPath();wgx.moveTo(0,v);wgx.lineTo(512,v);wgx.stroke()}
-for(let i=0;i<15;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*25+8;
-const gr=wgx.createRadialGradient(cx,cy,0,cx,cy,cr);const v=~~(Math.random()*8)+24;
-gr.addColorStop(0,`rgba(${v},${v-1},${v-2},.15)`);gr.addColorStop(1,'transparent');wgx.fillStyle=gr;wgx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
-const worldGt=new THREE.CanvasTexture(worldGc);worldGt.wrapS=worldGt.wrapT=THREE.RepeatWrapping;worldGt.repeat.set(20,20);
-const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.88,metalness:.03});
+wgx.fillStyle='#343230';wgx.fillRect(0,0,512,512);
+for(let i=0;i<20000;i++){const b=~~(Math.random()*16)+38;wgx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.15})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*1.5+.5)}
+// Subtle expansion joints (not a grid — just occasional lines)
+wgx.strokeStyle='rgba(20,18,15,.35)';wgx.lineWidth=1;
+for(let i=1;i<4;i++){const v=i/4*512;wgx.beginPath();wgx.moveTo(v,0);wgx.lineTo(v,512);wgx.stroke();wgx.beginPath();wgx.moveTo(0,v);wgx.lineTo(512,v);wgx.stroke()}
+// Wear and stains
+for(let i=0;i<25;i++){const cx=Math.random()*512,cy=Math.random()*512,cr=Math.random()*30+10;
+const gr=wgx.createRadialGradient(cx,cy,0,cx,cy,cr);gr.addColorStop(0,`rgba(${~~(Math.random()*10)+30},${~~(Math.random()*10)+28},${~~(Math.random()*10)+26},.2)`);gr.addColorStop(1,'transparent');wgx.fillStyle=gr;wgx.fillRect(cx-cr,cy-cr,cr*2,cr*2)}
+const worldGt=new THREE.CanvasTexture(worldGc);worldGt.wrapS=worldGt.wrapT=THREE.RepeatWrapping;worldGt.repeat.set(18,18);
+const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.85,metalness:.02});
 const worldGround=new THREE.Mesh(new THREE.PlaneGeometry(700,700),worldGroundMat);
 worldGround.rotation.x=-Math.PI/2;worldGround.position.y=-.02;worldGround.receiveShadow=true;scene.add(worldGround);
 

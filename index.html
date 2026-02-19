@@ -406,9 +406,9 @@ const positions=[];
 // N/S walls (x:-56..56, step 8)
 for(let x=-56;x<=56;x+=8){positions.push({x,z:-88,ry:Math.PI})}
 for(let x=-56;x<=56;x+=8){positions.push({x,z:88,ry:0})}
-// E/W walls (z:-8..8, step 2, skip road gap) — far from corners
-for(let z=-8;z<=8;z+=2){if(Math.abs(z)<6)continue;positions.push({x:-88,z,ry:-Math.PI/2})}
-for(let z=-8;z<=8;z+=2){if(Math.abs(z)<6)continue;positions.push({x:88,z,ry:Math.PI/2})}
+// E/W walls FULL HEIGHT (z:-56..56, step 8, skip road gap) — CLOSES PERIMETER
+for(let z=-56;z<=56;z+=8){if(Math.abs(z)<6)continue;positions.push({x:-88,z,ry:-Math.PI/2})}
+for(let z=-56;z<=56;z+=8){if(Math.abs(z)<6)continue;positions.push({x:88,z,ry:Math.PI/2})}
 positions.forEach(p=>{
 const c=g.scene.clone();c.scale.set(bScale,bScale,bScale);
 c.position.set(p.x,0,p.z);c.rotation.y=p.ry;

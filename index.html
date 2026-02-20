@@ -319,7 +319,12 @@ if(Math.abs(pos.z)<4){toast('CANNOT BUILD ON THE ROAD!');return}
 if(Math.abs(pos.x)>42||Math.abs(pos.z)>42){toast('TOO FAR FROM YOUR TERRITORY!');return}
 money-=PRICE;exitPlacement();
 loader.load(GLB_BASE+'harlem_casino.glb',g=>{
-const m=g.scene.clone();m.position.set(pos.x,0,pos.z);m.scale.set(.5,.5,.5);m.rotation.y=Math.PI;
+const m=g.scene.clone();m.scale.set(.5,.5,.5);m.rotation.y=Math.PI;
+// Center model on its bounding box so it places where you click
+m.position.set(0,0,0);m.updateMatrixWorld(true);
+const box=new THREE.Box3().setFromObject(m);
+const center=box.getCenter(new THREE.Vector3());
+m.position.set(pos.x-center.x,0,pos.z-center.z);
 m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
 scene.add(m);casinos.push({model:m,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
 },undefined,()=>{

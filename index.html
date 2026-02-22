@@ -611,15 +611,23 @@ extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoa
 loader.load(GLB_BASE+'city2.glb',g=>{
 const sc=9;
 const positions=[
-// N/S rows
+// N/S rows — first layer
 {x:-50,z:-96,ry:Math.PI},{x:-20,z:-96,ry:Math.PI},{x:10,z:-96,ry:Math.PI},{x:40,z:-96,ry:Math.PI},
 {x:-50,z:96,ry:0},{x:-20,z:96,ry:0},{x:10,z:96,ry:0},{x:40,z:96,ry:0},
-// E/W sides (not on center road)
+// E/W sides
 {x:-96,z:-40,ry:-Math.PI/2},{x:-96,z:40,ry:-Math.PI/2},
 {x:96,z:-40,ry:Math.PI/2},{x:96,z:40,ry:Math.PI/2},
-// Intersection corners (diagonal from road crossings)
+// Intersection corners
 {x:-96,z:-96,ry:-Math.PI/2},{x:96,z:-96,ry:Math.PI/2},
-{x:-96,z:96,ry:-Math.PI/2},{x:96,z:96,ry:Math.PI/2}
+{x:-96,z:96,ry:-Math.PI/2},{x:96,z:96,ry:Math.PI/2},
+// Second layer — further back
+{x:-60,z:-115,ry:Math.PI},{x:-25,z:-115,ry:Math.PI},{x:10,z:-115,ry:Math.PI},{x:45,z:-115,ry:Math.PI},
+{x:-60,z:115,ry:0},{x:-25,z:115,ry:0},{x:10,z:115,ry:0},{x:45,z:115,ry:0},
+{x:-115,z:-35,ry:-Math.PI/2},{x:-115,z:35,ry:-Math.PI/2},
+{x:115,z:-35,ry:Math.PI/2},{x:115,z:35,ry:Math.PI/2},
+// Fill gaps between E/W buildings
+{x:-96,z:-15,ry:-Math.PI/2},{x:-96,z:15,ry:-Math.PI/2},
+{x:96,z:-15,ry:Math.PI/2},{x:96,z:15,ry:Math.PI/2}
 ];
 positions.forEach(p=>{
 const c=g.scene.clone();c.scale.set(sc,sc,sc);
@@ -627,6 +635,125 @@ c.position.set(p.x,0,p.z);c.rotation.y=p.ry;
 c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
 scene.add(c)});
 });
+
+// === NPC PEOPLE (background) ===
+const npcPeople=[];
+const skinMat=new THREE.MeshStandardMaterial({color:0xD2A679,roughness:.9});
+const darkCloth=new THREE.MeshStandardMaterial({color:0x222222,roughness:.9});
+const clothColors=[0x2a2a4a,0x4a2a2a,0x2a4a2a,0x3a3a3a,0x4a3a2a,0x1a1a3a];
+function makeNPCPerson(x,z,ry,sitting){
+const g=new THREE.Group();
+const cloth=new THREE.MeshStandardMaterial({color:clothColors[~~(Math.random()*clothColors.length)],roughness:.9});
+if(sitting){
+// Sitting pose
+g.add(M(new THREE.BoxGeometry(.3,.35,.3),cloth,0,.88,0)); // torso
+g.add(M(new THREE.SphereGeometry(.15,6,6),skinMat,0,1.18,0)); // head
+g.add(M(new THREE.BoxGeometry(.3,.08,.35),darkCloth,0,.53,.05)); // thighs
+g.add(M(new THREE.BoxGeometry(.12,.35,.12),darkCloth,-.12,.35,.2)); // legs
+g.add(M(new THREE.BoxGeometry(.12,.35,.12),darkCloth,.12,.35,.2)); // legs
+}else{
+// Standing
+g.add(M(new THREE.BoxGeometry(.3,.4,.2),cloth,0,1.1,0)); // torso
+g.add(M(new THREE.SphereGeometry(.15,6,6),skinMat,0,1.45,0)); // head
+g.add(M(new THREE.CylinderGeometry(.07,.07,.5,6),darkCloth,-.12,.5,0)); // leg
+g.add(M(new THREE.CylinderGeometry(.07,.07,.5,6),darkCloth,.12,.5,0)); // leg
+g.add(M(new THREE.CylinderGeometry(.05,.05,.35,6),cloth,-.22,.95,0)); // arm
+g.add(M(new THREE.CylinderGeometry(.05,.05,.35,6),cloth,.22,.95,0)); // arm
+}
+g.position.set(x,0,z);g.rotation.y=ry||0;
+g.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
+scene.add(g);npcPeople.push(g);return g;
+}
+// Benches
+const benchMat=new THREE.MeshStandardMaterial({color:0x4a3520,roughness:.8});
+const benchMetal=new THREE.MeshStandardMaterial({color:0x333,metalness:.6,roughness:.4});
+function makeBench(x,z,ry){
+const b=new THREE.Group();
+b.add(M(new THREE.BoxGeometry(2,.08,.5),benchMat,0,.52,0)); // seat
+b.add(M(new THREE.BoxGeometry(2,.4,.06),benchMat,0,.8,-.22)); // back
+b.add(M(new THREE.CylinderGeometry(.04,.04,.52,6),benchMetal,-.8,.26,0)); // legs
+b.add(M(new THREE.CylinderGeometry(.04,.04,.52,6),benchMetal,.8,.26,0));
+b.add(M(new THREE.CylinderGeometry(.04,.04,.52,6),benchMetal,-.8,.26,-.2));
+b.add(M(new THREE.CylinderGeometry(.04,.04,.52,6),benchMetal,.8,.26,-.2));
+b.position.set(x,0,z);b.rotation.y=ry||0;scene.add(b);return b;
+}
+// Place benches with sitting people (inside zone, near sidewalks)
+makeBench(-30,-44.5,0);makeNPCPerson(-30.4,-44,Math.PI,true);makeNPCPerson(-29.5,-44,Math.PI,true);
+makeBench(25,-44.5,0);makeNPCPerson(25.3,-44,Math.PI,true);
+makeBench(-20,44.5,Math.PI);makeNPCPerson(-20.3,44,0,true);makeNPCPerson(-19.5,44,0,true);
+makeBench(35,44.5,Math.PI);makeNPCPerson(35.2,44,0,true);
+// Standing people near buildings
+makeNPCPerson(-44,-30,Math.PI/4,false);
+makeNPCPerson(-44,25,-Math.PI/4,false);
+makeNPCPerson(44,-20,Math.PI/2,false);
+makeNPCPerson(44,35,-Math.PI/3,false);
+// People outside zone
+makeNPCPerson(-93,-35,Math.PI/2,false);
+makeNPCPerson(93,35,-Math.PI/2,false);
+makeNPCPerson(-30,-93,0,false);
+makeNPCPerson(20,93,Math.PI,false);
+
+// === NPC CARS (background traffic) ===
+const npcCars=[];
+const carBodyColors=[0x8B0000,0x1a1a3a,0x2a2a2a,0x3a2a1a,0x1a3a2a,0x4a4a4a];
+function makeNPCCar(x,z,ry){
+const g=new THREE.Group();
+const col=carBodyColors[~~(Math.random()*carBodyColors.length)];
+const bm=new THREE.MeshStandardMaterial({color:col,roughness:.4,metalness:.3});
+g.add(M(new THREE.BoxGeometry(1.8,.6,3.5),bm,0,.5,0));
+g.add(M(new THREE.BoxGeometry(1.5,.5,1.5),bm,0,.95,-.2));
+const wm=new THREE.MeshStandardMaterial({color:0x111,roughness:.8});
+const wg=new THREE.CylinderGeometry(.25,.25,.1,8);
+[[-0.9,.25,1],[.9,.25,1],[-.9,.25,-1.2],[.9,.25,-1.2]].forEach(([wx,wy,wz])=>{
+const w=new THREE.Mesh(wg,wm);w.position.set(wx,wy,wz);w.rotation.z=Math.PI/2;g.add(w)});
+// Headlights
+const hlm=new THREE.MeshStandardMaterial({color:0xffffcc,emissive:0xffffaa,emissiveIntensity:.3});
+g.add(M(new THREE.SphereGeometry(.1,4,4),hlm,-.6,.5,1.75));
+g.add(M(new THREE.SphereGeometry(.1,4,4),hlm,.6,.5,1.75));
+// Taillights
+const tlm=new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:.2});
+g.add(M(new THREE.SphereGeometry(.08,4,4),tlm,-.6,.5,-1.75));
+g.add(M(new THREE.SphereGeometry(.08,4,4),tlm,.6,.5,-1.75));
+g.position.set(x,0,z);g.rotation.y=ry;
+g.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
+scene.add(g);return g;
+}
+// NPC car routes along background roads
+function spawnNPCCar(){
+const routes=[
+// Along N road (z=-88), going east
+{x:-140,z:-86,ry:Math.PI/2,axis:'x',speed:.08,stopX:[-92,88]},
+// Along N road, going west
+{x:140,z:-90,ry:-Math.PI/2,axis:'x',speed:-.08,stopX:[92,-88]},
+// Along S road, going east
+{x:-140,z:86,ry:Math.PI/2,axis:'x',speed:.08,stopX:[-92,88]},
+// Along S road, going west
+{x:140,z:90,ry:-Math.PI/2,axis:'x',speed:-.08,stopX:[92,-88]},
+// Along W road, going south
+{x:-86,z:-140,ry:0,axis:'z',speed:.08,stopZ:[-92,88]},
+// Along W road, going north
+{x:-90,z:140,ry:Math.PI,axis:'z',speed:-.08,stopZ:[92,-88]},
+// Along E road, going south
+{x:86,z:-140,ry:0,axis:'z',speed:.08,stopZ:[-92,88]},
+// Along E road, going north
+{x:90,z:140,ry:Math.PI,axis:'z',speed:-.08,stopZ:[92,-88]},
+];
+const r=routes[~~(Math.random()*routes.length)];
+const car=makeNPCCar(r.x,r.z,r.ry);
+npcCars.push({mesh:car,axis:r.axis,speed:r.speed,
+stops:r.stopX||r.stopZ||[],stopTimer:0,stopped:false,life:0,maxLife:5000});
+}
+// Spawn initial NPC cars
+for(let i=0;i<4;i++)spawnNPCCar();
+// Parked NPC cars near buildings
+makeNPCCar(-94,-25,-Math.PI/2);
+makeNPCCar(-94,30,-Math.PI/2);
+makeNPCCar(94,-20,Math.PI/2);
+makeNPCCar(94,30,Math.PI/2);
+makeNPCCar(-35,-94,Math.PI);
+makeNPCCar(25,-94,Math.PI);
+makeNPCCar(-20,94,0);
+makeNPCCar(40,94,0);
 
 // === DETAILS — BOTH INSIDE AND OUTSIDE ZONE ===
 const metalDark=new THREE.MeshStandardMaterial({color:0x333,metalness:.7,roughness:.3});
@@ -967,6 +1094,19 @@ const tc=trafficCars[i];tc.mesh.position[tc.axis]+=tc.speed;tc.life++;
 if(tc.life>tc.maxLife){scene.remove(tc.mesh);trafficCars.splice(i,1)}
 }
 if(Math.random()<.0005&&trafficCars.length<1) spawnTrafficCar();
+// NPC background cars
+for(let i=npcCars.length-1;i>=0;i--){
+const nc=npcCars[i];
+if(nc.stopped){nc.stopTimer--;if(nc.stopTimer<=0)nc.stopped=false;continue}
+nc.mesh.position[nc.axis]+=nc.speed;nc.life++;
+// Check if near intersection — stop briefly
+const pos=nc.mesh.position[nc.axis];
+for(const s of nc.stops){
+if(Math.abs(pos-s)<.5&&Math.random()<.3){nc.stopped=true;nc.stopTimer=80+~~(Math.random()*120);break}
+}
+if(nc.life>nc.maxLife){scene.remove(nc.mesh);npcCars.splice(i,1)}
+}
+if(Math.random()<.008&&npcCars.length<8)spawnNPCCar();
 // Bullets
 for(let i=bullets.length-1;i>=0;i--){
 const b=bullets[i];b.mesh.position.x+=b.dx;b.mesh.position.z+=b.dz;b.life++;

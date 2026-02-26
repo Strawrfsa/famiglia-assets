@@ -208,8 +208,8 @@ let wp=null,wpArr=[];
 let selectedItem=0;
 const BUILDINGS=[
 {name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:"LA CORONA D'ORO — ESTABLISHED"},
-{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.5,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
-{name:'Apartment',glb:'buil.glb',price:10000,income:200,scale:.5,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
+{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.05,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
+{name:'Apartment',glb:'build.glb',price:10000,income:200,scale:6,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
 ];
 const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
 
@@ -331,7 +331,8 @@ const m=g.scene.clone();m.scale.set(b.scale,b.scale,b.scale);m.rotation.y=b.rotY
 m.position.set(0,0,0);m.updateMatrixWorld(true);
 const box=new THREE.Box3().setFromObject(m);
 const center=box.getCenter(new THREE.Vector3());
-m.position.set(pos.x-center.x,0,pos.z-center.z);
+const bottomY=box.min.y;
+m.position.set(pos.x-center.x,-bottomY,pos.z-center.z);
 m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
 scene.add(m);
 if(selectedItem===0){casinos.push({model:m,pos})}

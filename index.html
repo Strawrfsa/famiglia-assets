@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -140,18 +139,19 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 </div>
 </div>
 
-<div class="shop-item" id="shopItem2" style="opacity:.4;pointer-events:none;position:relative">
-<div style="position:absolute;top:10px;right:12px;font-family:'Cinzel',serif;color:var(--blood-red);font-size:.75rem;letter-spacing:2px;border:1px solid var(--blood-red);padding:3px 10px;border-radius:2px">COMING SOON</div>
+<div class="shop-item" id="shopItem2" onclick="selectItem(1)">
 <div class="shop-item-top">
-<div class="shop-item-icon">🍸</div>
+<div class="shop-item-icon">🚬</div>
 <div class="shop-item-info">
-<h4>The Dark Shadow Lounge</h4>
-<p>Ombra Nera</p>
+<h4>Tabacco Warehouse</h4>
+<p>Il Magazzino del Tabacco</p>
 </div>
 </div>
+<div class="shop-item-desc">A shadowy warehouse on the docks where contraband tobacco flows through the family's network. Low profile, steady income — the backbone of the operation.</div>
 <div class="shop-item-stats">
 <div class="shop-item-stat"><span class="label">PRICE</span><span class="val">$15K</span></div>
 <div class="shop-item-stat"><span class="label">INCOME</span><span class="val">$300/h</span></div>
+<div class="shop-item-stat"><span class="label">RISK</span><span class="val" style="color:#ffa500">MEDIUM</span></div>
 </div>
 </div>
 
@@ -171,7 +171,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 </div>
 
 <div class="shop-footer">
-<button class="btn-gold" id="buyBtn" onclick="enterPlacement()">PLACE CASINO</button>
+<button class="btn-gold" id="buyBtn" onclick="enterPlacement()">PLACE BUILDING</button>
 <button class="btn-ghost" onclick="closeShop()">CANCEL</button>
 </div>
 </div>
@@ -185,6 +185,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <div class="hud-row"><span>💰 Money</span><span>$<span id="hMoney">50,000</span></span></div>
 <div class="hud-div"></div>
 <div class="hud-row"><span>🎰 Casinos</span><span id="hCount">0</span></div>
+<div class="hud-row"><span>🚬 Warehouses</span><span id="hWCount">0</span></div>
 <div class="hud-row"><span>💵 Income/h</span><span>$<span id="hIncome">0</span></span></div>
 <div class="hud-div"></div>
 <button class="hud-btn" onclick="openShop()">THE BLACK MARKET</button>
@@ -198,11 +199,15 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 let scene,camera,renderer,player,loader,gameActive=true;
-let money=50000,casinos=[],target=null,moving=false,placing=false;
+let money=50000,casinos=[],warehouses=[],target=null,moving=false,placing=false;
 let camDist=40,camMin=12,camMax=65;
 let placeGlow=null,placeInner=null,placeArrows=[];
 let wp=null,wpArr=[];
-const PRICE=25000,INCOME=500;
+let selectedItem=0;
+const BUILDINGS=[
+{name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:"LA CORONA D'ORO — ESTABLISHED"},
+{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.5,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"}
+];
 const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
 
 let musicPlaying=false;
@@ -272,16 +277,25 @@ st.textContent=`${type} not detected. Opening install page...`;setTimeout(()=>wi
 }catch(e){st.textContent='Connection rejected.';console.error(e)}
 }
 
-function selectItem(i){/* only item 0 for now */}
+function selectItem(i){
+if(i>1)return;selectedItem=i;
+document.querySelectorAll('.shop-item').forEach((el,idx)=>{if(idx<2)el.classList.toggle('selected',idx===i)});
+const b=BUILDINGS[i];
+document.getElementById('buyBtn').disabled=money<b.price;
+document.getElementById('buyBtn').textContent='PLACE '+b.name.toUpperCase();
+}
 function openShop(){
 document.getElementById('shopBal').textContent='$'+money.toLocaleString();
-document.getElementById('buyBtn').disabled=money<PRICE;
+const b=BUILDINGS[selectedItem];
+document.getElementById('buyBtn').disabled=money<b.price;
+document.getElementById('buyBtn').textContent='PLACE '+b.name.toUpperCase();
 document.getElementById('shopMod').classList.add('active');document.getElementById('shopOv').classList.add('active');
 }
 function closeShop(){document.getElementById('shopMod').classList.remove('active');document.getElementById('shopOv').classList.remove('active')}
 
 function enterPlacement(){
-if(money<PRICE){toast('NOT ENOUGH MONEY!');return}
+const b=BUILDINGS[selectedItem];
+if(money<b.price){toast('NOT ENOUGH MONEY!');return}
 closeShop();placing=true;
 document.getElementById('placeBanner').classList.add('active');
 if(!placeGlow){
@@ -300,33 +314,43 @@ placeGlow.visible=placeInner.visible=true;placeArrows.forEach(a=>a.visible=true)
 function exitPlacement(){placing=false;document.getElementById('placeBanner').classList.remove('active');
 if(placeGlow){placeGlow.visible=placeInner.visible=false}placeArrows.forEach(a=>a.visible=false)}
 
-function placeCasino(pos){
-if(money<PRICE){toast('NOT ENOUGH MONEY!');return}
+function placeBuilding(pos){
+const b=BUILDINGS[selectedItem];
+if(money<b.price){toast('NOT ENOUGH MONEY!');return}
 if(Math.abs(pos.z)<4){toast('CANNOT BUILD ON THE ROAD!');return}
 if(Math.abs(pos.x)>42||Math.abs(pos.z)>42){toast('TOO FAR FROM YOUR TERRITORY!');return}
-money-=PRICE;exitPlacement();
-loader.load(GLB_BASE+'harlem_casino.glb',g=>{
-// ✅ FIXED: removed duplicate const m declaration
-const m=g.scene.clone();m.scale.set(.5,.5,.5);m.rotation.y=Math.PI;
+const whichItem=selectedItem;
+money-=b.price;exitPlacement();
+loader.load(GLB_BASE+b.glb,g=>{
+const m=g.scene.clone();m.scale.set(b.scale,b.scale,b.scale);m.rotation.y=b.rotY;
 m.position.set(0,0,0);m.updateMatrixWorld(true);
 const box=new THREE.Box3().setFromObject(m);
 const center=box.getCenter(new THREE.Vector3());
 m.position.set(pos.x-center.x,0,pos.z-center.z);
 m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
-scene.add(m);casinos.push({model:m,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
+scene.add(m);
+if(whichItem===0)casinos.push({model:m,pos});else warehouses.push({model:m,pos});
+updateUI();toast(b.toast);
 },undefined,()=>{
 const g=new THREE.Group();
-const b=new THREE.Mesh(new THREE.BoxGeometry(3,4,3),new THREE.MeshStandardMaterial({color:0x8B0000,emissive:0xff0000,emissiveIntensity:.2}));
-b.position.y=2;b.castShadow=true;g.add(b);
-const s=new THREE.Mesh(new THREE.BoxGeometry(2.5,.6,.15),new THREE.MeshStandardMaterial({color:0xD4AF37,emissive:0xD4AF37,emissiveIntensity:1.5}));
-s.position.set(0,4.3,1.6);g.add(s);
-g.position.set(pos.x,0,pos.z);scene.add(g);casinos.push({model:g,pos});updateUI();toast("LA CORONA D'ORO — ESTABLISHED");
+const color=whichItem===0?0x8B0000:0x4a3520;
+const fb=new THREE.Mesh(new THREE.BoxGeometry(3,whichItem===0?4:3,whichItem===0?3:5),new THREE.MeshStandardMaterial({color,roughness:.8}));
+fb.position.y=whichItem===0?2:1.5;fb.castShadow=true;g.add(fb);
+const roof=new THREE.Mesh(new THREE.BoxGeometry(3.2,.2,whichItem===0?3.2:5.2),new THREE.MeshStandardMaterial({color:0x333}));
+roof.position.y=whichItem===0?4.1:3.1;g.add(roof);
+const sign=new THREE.Mesh(new THREE.BoxGeometry(2,.4,.1),new THREE.MeshStandardMaterial({color:0xD4AF37,emissive:0xD4AF37,emissiveIntensity:1}));
+sign.position.set(0,whichItem===0?3.5:2.5,whichItem===0?1.6:2.6);g.add(sign);
+g.position.set(pos.x,0,pos.z);scene.add(g);
+if(whichItem===0)casinos.push({model:g,pos});else warehouses.push({model:g,pos});
+updateUI();toast(b.toast);
 });
 }
 function updateUI(){
 document.getElementById('hMoney').textContent=money.toLocaleString();
 document.getElementById('hCount').textContent=casinos.length;
-document.getElementById('hIncome').textContent=(casinos.length*INCOME).toLocaleString();
+document.getElementById('hWCount').textContent=warehouses.length;
+const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income;
+document.getElementById('hIncome').textContent=totalIncome.toLocaleString();
 }
 
 function makeWP(pt){removeWP();
@@ -782,7 +806,7 @@ const hit=ray.ray.intersectPlane(groundPlane,pt);
 return hit?pt:null;
 }
 cv.addEventListener('click',e=>{if(!gameActive)return;const pt=gp(e);if(!pt)return;
-if(placing){placeCasino({x:pt.x,z:pt.z})}else{
+if(placing){placeBuilding({x:pt.x,z:pt.z})}else{
 const cx=Math.max(-PLIM,Math.min(PLIM,pt.x)),cz=Math.max(-PLIM,Math.min(PLIM,pt.z));
 target={x:cx,z:cz};moving=true;makeWP({x:cx,y:.1,z:cz})}});
 cv.addEventListener('contextmenu',e=>{e.preventDefault();if(placing)exitPlacement()});
@@ -901,6 +925,9 @@ casinos.forEach(c=>{const mx=((c.pos.x+ms/2)/ms)*sz,my=((c.pos.z+ms/2)/ms)*sz;
 const gr=ctx.createRadialGradient(mx,my,0,mx,my,10);gr.addColorStop(0,'rgba(212,175,55,.35)');gr.addColorStop(1,'transparent');
 ctx.fillStyle=gr;ctx.fillRect(mx-10,my-10,20,20);ctx.fillStyle='#D4AF37';ctx.fillRect(mx-3,my-3,6,6);
 ctx.strokeStyle='#D4AF37';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
+warehouses.forEach(w=>{const mx=((w.pos.x+ms/2)/ms)*sz,my=((w.pos.z+ms/2)/ms)*sz;
+ctx.fillStyle='#8B4513';ctx.fillRect(mx-3,my-3,6,6);
+ctx.strokeStyle='#8B4513';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
 const px=((player.position.x+ms/2)/ms)*sz,py=((player.position.z+ms/2)/ms)*sz;
 ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#F5E6D3';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.stroke();
@@ -910,7 +937,10 @@ ctx.strokeStyle='#D4AF37';ctx.lineWidth=2;ctx.strokeRect(0,0,sz,sz)}
 renderer.render(scene,camera)})();
 
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-setInterval(()=>{if(gameActive&&casinos.length>0){money+=(casinos.length*INCOME)/3600;updateUI()}},1000);
+setInterval(()=>{if(gameActive){
+const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income;
+if(totalIncome>0){money+=totalIncome/3600;updateUI()}
+}},1000);
 });
 </script>
 </body>

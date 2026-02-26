@@ -155,18 +155,19 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 </div>
 </div>
 
-<div class="shop-item" id="shopItem3" style="opacity:.4;pointer-events:none;position:relative">
-<div style="position:absolute;top:10px;right:12px;font-family:'Cinzel',serif;color:var(--blood-red);font-size:.75rem;letter-spacing:2px;border:1px solid var(--blood-red);padding:3px 10px;border-radius:2px">COMING SOON</div>
+<div class="shop-item" id="shopItem3" onclick="selectItem(2)">
 <div class="shop-item-top">
 <div class="shop-item-icon">🏨</div>
 <div class="shop-item-info">
-<h4>The Palace Hotel</h4>
-<p>Il Palazzo</p>
+<h4>The Family Apartment</h4>
+<p>L'Appartamento della Famiglia</p>
 </div>
 </div>
+<div class="shop-item-desc">A discreet residential building where loyal family members reside. Rent flows steady, and eyes on the street keep you informed.</div>
 <div class="shop-item-stats">
-<div class="shop-item-stat"><span class="label">PRICE</span><span class="val">$50K</span></div>
-<div class="shop-item-stat"><span class="label">INCOME</span><span class="val">$1,000/h</span></div>
+<div class="shop-item-stat"><span class="label">PRICE</span><span class="val">$10K</span></div>
+<div class="shop-item-stat"><span class="label">INCOME</span><span class="val">$200/h</span></div>
+<div class="shop-item-stat"><span class="label">RISK</span><span class="val" style="color:#66cc66">LOW</span></div>
 </div>
 </div>
 
@@ -186,6 +187,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <div class="hud-div"></div>
 <div class="hud-row"><span>🎰 Casinos</span><span id="hCount">0</span></div>
 <div class="hud-row"><span>🚬 Warehouses</span><span id="hWCount">0</span></div>
+<div class="hud-row"><span>🏨 Apartments</span><span id="hACount">0</span></div>
 <div class="hud-row"><span>💵 Income/h</span><span>$<span id="hIncome">0</span></span></div>
 <div class="hud-div"></div>
 <button class="hud-btn" onclick="openShop()">THE BLACK MARKET</button>
@@ -199,14 +201,15 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 let scene,camera,renderer,player,loader,gameActive=true;
-let money=50000,casinos=[],warehouses=[],target=null,moving=false,placing=false;
+let money=50000,casinos=[],warehouses=[],apartments=[],target=null,moving=false,placing=false;
 let camDist=40,camMin=12,camMax=65;
 let placeGlow=null,placeInner=null,placeArrows=[];
 let wp=null,wpArr=[];
 let selectedItem=0;
 const BUILDINGS=[
 {name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:"LA CORONA D'ORO — ESTABLISHED"},
-{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.5,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"}
+{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.5,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
+{name:'Apartment',glb:'buil.glb',price:10000,income:200,scale:.5,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
 ];
 const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
 
@@ -278,8 +281,11 @@ st.textContent=`${type} not detected. Opening install page...`;setTimeout(()=>wi
 }
 
 function selectItem(i){
-if(i>1)return;selectedItem=i;
-document.querySelectorAll('.shop-item').forEach((el,idx)=>{if(idx<2)el.classList.toggle('selected',idx===i)});
+if(i>2)return;
+selectedItem=i;
+document.querySelectorAll('.shop-item').forEach((el,idx)=>{
+if(idx<3)el.classList.toggle('selected',idx===i);
+});
 const b=BUILDINGS[i];
 document.getElementById('buyBtn').disabled=money<b.price;
 document.getElementById('buyBtn').textContent='PLACE '+b.name.toUpperCase();
@@ -319,7 +325,6 @@ const b=BUILDINGS[selectedItem];
 if(money<b.price){toast('NOT ENOUGH MONEY!');return}
 if(Math.abs(pos.z)<4){toast('CANNOT BUILD ON THE ROAD!');return}
 if(Math.abs(pos.x)>42||Math.abs(pos.z)>42){toast('TOO FAR FROM YOUR TERRITORY!');return}
-const whichItem=selectedItem;
 money-=b.price;exitPlacement();
 loader.load(GLB_BASE+b.glb,g=>{
 const m=g.scene.clone();m.scale.set(b.scale,b.scale,b.scale);m.rotation.y=b.rotY;
@@ -329,19 +334,24 @@ const center=box.getCenter(new THREE.Vector3());
 m.position.set(pos.x-center.x,0,pos.z-center.z);
 m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
 scene.add(m);
-if(whichItem===0)casinos.push({model:m,pos});else warehouses.push({model:m,pos});
+if(selectedItem===0){casinos.push({model:m,pos})}
+else if(selectedItem===1){warehouses.push({model:m,pos})}
+else{apartments.push({model:m,pos})}
 updateUI();toast(b.toast);
 },undefined,()=>{
+// Fallback box
 const g=new THREE.Group();
-const color=whichItem===0?0x8B0000:0x4a3520;
-const fb=new THREE.Mesh(new THREE.BoxGeometry(3,whichItem===0?4:3,whichItem===0?3:5),new THREE.MeshStandardMaterial({color,roughness:.8}));
-fb.position.y=whichItem===0?2:1.5;fb.castShadow=true;g.add(fb);
-const roof=new THREE.Mesh(new THREE.BoxGeometry(3.2,.2,whichItem===0?3.2:5.2),new THREE.MeshStandardMaterial({color:0x333}));
-roof.position.y=whichItem===0?4.1:3.1;g.add(roof);
+const colors=[0x8B0000,0x4a3520,0x3a3a5a];
+const fb=new THREE.Mesh(new THREE.BoxGeometry(3,3,4),new THREE.MeshStandardMaterial({color:colors[selectedItem],roughness:.8}));
+fb.position.y=1.5;fb.castShadow=true;g.add(fb);
+const roof=new THREE.Mesh(new THREE.BoxGeometry(3.2,.2,4.2),new THREE.MeshStandardMaterial({color:0x333}));
+roof.position.y=3.1;g.add(roof);
 const sign=new THREE.Mesh(new THREE.BoxGeometry(2,.4,.1),new THREE.MeshStandardMaterial({color:0xD4AF37,emissive:0xD4AF37,emissiveIntensity:1}));
-sign.position.set(0,whichItem===0?3.5:2.5,whichItem===0?1.6:2.6);g.add(sign);
+sign.position.set(0,2.5,2.05);g.add(sign);
 g.position.set(pos.x,0,pos.z);scene.add(g);
-if(whichItem===0)casinos.push({model:g,pos});else warehouses.push({model:g,pos});
+if(selectedItem===0){casinos.push({model:g,pos})}
+else if(selectedItem===1){warehouses.push({model:g,pos})}
+else{apartments.push({model:g,pos})}
 updateUI();toast(b.toast);
 });
 }
@@ -349,7 +359,8 @@ function updateUI(){
 document.getElementById('hMoney').textContent=money.toLocaleString();
 document.getElementById('hCount').textContent=casinos.length;
 document.getElementById('hWCount').textContent=warehouses.length;
-const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income;
+document.getElementById('hACount').textContent=apartments.length;
+const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income+apartments.length*BUILDINGS[2].income;
 document.getElementById('hIncome').textContent=totalIncome.toLocaleString();
 }
 
@@ -475,6 +486,7 @@ const moon=new THREE.DirectionalLight(0x8888cc,.25);moon.position.set(-20,40,-20
 const sl=new THREE.SpotLight(0x8B0000,.5);sl.position.set(-25,20,-25);sl.angle=Math.PI/5;sl.penumbra=.7;scene.add(sl);
 const sl2=new THREE.SpotLight(0xD4AF37,.4);sl2.position.set(25,20,25);sl2.angle=Math.PI/5;sl2.penumbra=.7;scene.add(sl2);
 
+// === WORLD GROUND — REALISTIC CONCRETE ===
 const worldGc=document.createElement('canvas');worldGc.width=512;worldGc.height=512;const wgx=worldGc.getContext('2d');
 wgx.fillStyle='#343230';wgx.fillRect(0,0,512,512);
 for(let i=0;i<20000;i++){const b=~~(Math.random()*16)+38;wgx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.15})`;wgx.fillRect(Math.random()*512,Math.random()*512,Math.random()*2+.5,Math.random()*1.5+.5)}
@@ -487,6 +499,7 @@ const worldGroundMat=new THREE.MeshStandardMaterial({map:worldGt,roughness:.85,m
 const worldGround=new THREE.Mesh(new THREE.PlaneGeometry(700,700),worldGroundMat);
 worldGround.rotation.x=-Math.PI/2;worldGround.position.y=-.02;worldGround.receiveShadow=true;scene.add(worldGround);
 
+// === PLAYABLE ZONE GROUND ===
 const pgc=document.createElement('canvas');pgc.width=1024;pgc.height=1024;const pgx=pgc.getContext('2d');
 pgx.fillStyle='#222';pgx.fillRect(0,0,1024,1024);
 for(let i=0;i<25000;i++){const b=~~(Math.random()*20)+22;pgx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.35})`;pgx.fillRect(Math.random()*1024,Math.random()*1024,Math.random()*3+.5,Math.random()*3+.5)}
@@ -502,6 +515,7 @@ groundTop.rotation.x=-Math.PI/2;groundTop.position.set(0,.01,23.5);groundTop.rec
 const groundBot=new THREE.Mesh(new THREE.PlaneGeometry(90,42),playGroundMat);
 groundBot.rotation.x=-Math.PI/2;groundBot.position.set(0,.01,-23.5);groundBot.receiveShadow=true;groundBot.name='g';scene.add(groundBot);
 
+// === SIDEWALKS ===
 const swc=document.createElement('canvas');swc.width=512;swc.height=128;const swx=swc.getContext('2d');
 swx.fillStyle='#383634';swx.fillRect(0,0,512,128);
 for(let i=0;i<8000;i++){const b=~~(Math.random()*18)+40;swx.fillStyle=`rgba(${b},${b},${b-2},${Math.random()*.15})`;swx.fillRect(Math.random()*512,Math.random()*128,Math.random()*2+.5,Math.random()*1.5+.5)}
@@ -529,6 +543,7 @@ const swE2=new THREE.Mesh(new THREE.BoxGeometry(3,0.18,40),sidewalkMat.clone());
 swE2.material.map=swt.clone();swE2.material.map.repeat.set(1,4);
 swE2.position.set(46.5,.09,25);swE2.receiveShadow=true;scene.add(swE2);
 
+// === CENTER STREET ===
 const sc=document.createElement('canvas');sc.width=512;sc.height=128;const sx=sc.getContext('2d');
 sx.fillStyle='#141414';sx.fillRect(0,0,512,128);
 for(let i=0;i<8000;i++){const b=~~(Math.random()*20)+8;sx.fillStyle=`rgba(${b},${b},${b},${Math.random()*.4})`;sx.fillRect(Math.random()*512,Math.random()*128,Math.random()*2+.5,Math.random()*2+.5)}
@@ -542,6 +557,7 @@ const centerStreet=new THREE.Mesh(new THREE.PlaneGeometry(90,5),sm);
 centerStreet.rotation.x=-Math.PI/2;centerStreet.position.set(0,.02,0);
 centerStreet.receiveShadow=true;centerStreet.name='g';scene.add(centerStreet);
 
+// === SIDE ROADS ===
 const bgRNm=sm.clone();bgRNm.map=st.clone();bgRNm.map.repeat.set(8,1);
 const bgRoadN=new THREE.Mesh(new THREE.PlaneGeometry(200,8),bgRNm);
 bgRoadN.rotation.x=-Math.PI/2;bgRoadN.position.set(0,.015,-88);scene.add(bgRoadN);
@@ -571,6 +587,7 @@ const extRoadRm=sm.clone();extRoadRm.map=st.clone();extRoadRm.map.repeat.set(8,1
 const extRoadR=new THREE.Mesh(new THREE.PlaneGeometry(200,5),extRoadRm);
 extRoadR.rotation.x=-Math.PI/2;extRoadR.position.set(145,.01,0);scene.add(extRoadR);
 
+// === CITY2 BUILDINGS ===
 loader.load(GLB_BASE+'city2.glb',g=>{
 const sc=9;
 const positions=[
@@ -588,6 +605,7 @@ c.traverse(ch=>{if(ch.isMesh){ch.castShadow=false;ch.receiveShadow=false}});
 scene.add(c)});
 });
 
+// === DETAILS ===
 const metalDark=new THREE.MeshStandardMaterial({color:0x333,metalness:.7,roughness:.3});
 const redMat=new THREE.MeshStandardMaterial({color:0xcc2200,roughness:.4,metalness:.3});
 
@@ -763,6 +781,7 @@ const bk=new THREE.Mesh(new THREE.BoxGeometry(2,.6,.08),wM);bk.position.set(0,.3
 b.position.set(bx,.25,bz);b.rotation.y=Math.PI/2;scene.add(b);
 });
 
+// === PLAYER ===
 player=new THREE.Group();const bM=new THREE.MeshStandardMaterial({color:0x111,roughness:.5,metalness:.1});
 player.add(M(new THREE.CylinderGeometry(.36,.46,1.15,8),bM,0,.58,0,true));
 player.add(M(new THREE.BoxGeometry(1,.18,.45),bM,0,1.1,0));
@@ -795,6 +814,7 @@ mk.rotation.x=-Math.PI/2;mk.position.y=.05;scene.add(mk);player.mk=mk;
 const gl=new THREE.Mesh(new THREE.CircleGeometry(1,32),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:.12,side:THREE.DoubleSide}));
 gl.rotation.x=-Math.PI/2;gl.position.y=.03;scene.add(gl);player.gl=gl;
 
+// === CONTROLS ===
 const PLIM=44;
 const ray=new THREE.Raycaster(),mo=new THREE.Vector2();
 const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
@@ -815,6 +835,7 @@ placeGlow.position.set(pt.x,.1,pt.z);placeInner.position.set(pt.x,.08,pt.z);
 placeArrows.forEach(a=>{a.position.set(pt.x+a.userData.ox,.12,pt.z+a.userData.oz);a.rotation.z=a.userData.rz})});
 cv.addEventListener('wheel',e=>{e.preventDefault();camDist+=e.deltaY*.03;camDist=Math.max(camMin,Math.min(camMax,camDist))},{passive:false});
 
+// === SHOOTING ===
 const bulletMat=new THREE.MeshBasicMaterial({color:0xFFD700});
 const fireMats=[
 new THREE.MeshBasicMaterial({color:0xFF4500,transparent:true}),
@@ -864,6 +885,7 @@ window.addEventListener('keydown',e=>{
 if(e.key==='Enter'&&gameActive&&!placing){e.preventDefault();shoot()}
 });
 
+// === ANIMATION LOOP ===
 (function run(){if(!gameActive)return;requestAnimationFrame(run);const t=Date.now()*.001;
 const sunY=Math.sin(t*.05);
 skyMat.uniforms.uTime.value=t;
@@ -894,11 +916,13 @@ placeGlow.material.opacity=.3+Math.sin(t*4)*.2;placeInner.material.opacity=.1+Ma
 const s=1+Math.sin(t*2)*.05;placeGlow.scale.set(s,s,s);
 placeArrows.forEach((a,i)=>{a.material.opacity=.5+Math.sin(t*4+i)*.3})}
 if(wp){wp.material.opacity=.5+Math.sin(t*5)*.3;wpArr.forEach((a,i)=>{a.material.opacity=.4+Math.sin(t*5+i*.5)*.3})}
+// Traffic cars
 for(let i=trafficCars.length-1;i>=0;i--){
 const tc=trafficCars[i];tc.mesh.position[tc.axis]+=tc.speed;tc.life++;
 if(tc.life>tc.maxLife){scene.remove(tc.mesh);trafficCars.splice(i,1)}
 }
 if(Math.random()<.0005&&trafficCars.length<1) spawnTrafficCar();
+// Bullets
 for(let i=bullets.length-1;i>=0;i--){
 const b=bullets[i];b.mesh.position.x+=b.dx;b.mesh.position.z+=b.dz;b.life++;
 let hit=false;
@@ -909,12 +933,14 @@ if(Math.sqrt(dx*dx+dz*dz)<3){explodeCar(tc);hit=true;break}
 }
 if(hit||b.life>120){scene.remove(b.mesh);bullets.splice(i,1)}
 }
+// Explosions
 for(let i=explosions.length-1;i>=0;i--){
 const e=explosions[i];e.mesh.position.y+=e.vy;e.life++;
 e.mesh.material.opacity=1-(e.life/e.maxLife);
 const s=e.mesh.scale.x*(1+.02);e.mesh.scale.set(s,s,s);
 if(e.life>e.maxLife){scene.remove(e.mesh);explosions.splice(i,1)}
 }
+// Minimap
 const mc=document.getElementById('mm');if(mc){const ctx=mc.getContext('2d'),sz=200,ms=100;
 ctx.fillStyle='#080808';ctx.fillRect(0,0,sz,sz);
 ctx.strokeStyle='rgba(212,175,55,.06)';ctx.lineWidth=1;
@@ -928,6 +954,9 @@ ctx.strokeStyle='#D4AF37';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
 warehouses.forEach(w=>{const mx=((w.pos.x+ms/2)/ms)*sz,my=((w.pos.z+ms/2)/ms)*sz;
 ctx.fillStyle='#8B4513';ctx.fillRect(mx-3,my-3,6,6);
 ctx.strokeStyle='#8B4513';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
+apartments.forEach(a=>{const mx=((a.pos.x+ms/2)/ms)*sz,my=((a.pos.z+ms/2)/ms)*sz;
+ctx.fillStyle='#6666aa';ctx.fillRect(mx-3,my-3,6,6);
+ctx.strokeStyle='#6666aa';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
 const px=((player.position.x+ms/2)/ms)*sz,py=((player.position.z+ms/2)/ms)*sz;
 ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#F5E6D3';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.stroke();
@@ -938,7 +967,7 @@ renderer.render(scene,camera)})();
 
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 setInterval(()=>{if(gameActive){
-const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income;
+const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income+apartments.length*BUILDINGS[2].income;
 if(totalIncome>0){money+=totalIncome/3600;updateUI()}
 }},1000);
 });

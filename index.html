@@ -197,8 +197,10 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meshoptimizer@0.18.1/meshopt_decoder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meshoptimizer@0.20.0/meshopt_decoder.js"></script>
 <script>
 let scene,camera,renderer,player,loader,gameActive=true;
 let money=50000,casinos=[],warehouses=[],apartments=[],target=null,moving=false,placing=false;
@@ -209,7 +211,7 @@ let selectedItem=0;
 const BUILDINGS=[
 {name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:"LA CORONA D'ORO — ESTABLISHED"},
 {name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.05,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
-{name:'Apartment',glb:'build.glb',price:10000,income:200,scale:6,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
+{name:'Apartment',glb:'build.glb',price:10000,income:200,scale:14,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
 ];
 const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
 
@@ -328,6 +330,15 @@ if(Math.abs(pos.x)>42||Math.abs(pos.z)>42){toast('TOO FAR FROM YOUR TERRITORY!')
 money-=b.price;exitPlacement();
 loader.load(GLB_BASE+b.glb,g=>{
 const m=g.scene.clone();m.scale.set(b.scale,b.scale,b.scale);m.rotation.y=b.rotY;
+// For build.glb: remove LOD1, LOD2 duplicates and ground plane
+if(selectedItem===2){
+const toRemove=[];
+m.traverse(ch=>{
+if(ch.name&&(ch.name.includes('LOD1')||ch.name.includes('LOD2')||ch.name==='Plane'||ch.name.includes('Road')))
+toRemove.push(ch);
+});
+toRemove.forEach(ch=>{if(ch.parent)ch.parent.remove(ch)});
+}
 m.position.set(0,0,0);m.updateMatrixWorld(true);
 const box=new THREE.Box3().setFromObject(m);
 const center=box.getCenter(new THREE.Vector3());
@@ -385,6 +396,8 @@ renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(deviceP
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.4;
 loader=new THREE.GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+loader.setMeshoptDecoder(MeshoptDecoder);
 
 const skyGeo=new THREE.SphereGeometry(300,32,16);
 const skyMat=new THREE.ShaderMaterial({

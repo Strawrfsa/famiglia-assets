@@ -35,7 +35,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .shop-header::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(212,175,55,.03) 10px,rgba(212,175,55,.03) 20px)}
 .shop-header h2{font-family:'Pirata One',cursive;color:var(--gold);font-size:2.2rem;text-align:center;text-shadow:0 0 30px rgba(212,175,55,.4);position:relative}
 .shop-header p{font-family:'Cormorant Garamond',serif;color:rgba(245,230,211,.5);text-align:center;margin-top:4px;font-style:italic;letter-spacing:3px;position:relative}
-.shop-body{padding:25px 30px 30px}
+.shop-body{padding:25px 30px 30px;max-height:60vh;overflow-y:auto}
 
 .shop-item{background:linear-gradient(135deg,rgba(42,32,20,.5),rgba(26,20,14,.6));border:1px solid rgba(212,175,55,.25);border-radius:3px;padding:20px;margin-bottom:20px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
 .shop-item:hover{border-color:var(--gold);box-shadow:0 0 25px rgba(212,175,55,.15);transform:translateY(-2px)}
@@ -171,6 +171,22 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 </div>
 </div>
 
+<div class="shop-item" id="shopItem4" onclick="selectItem(3)">
+<div class="shop-item-top">
+<div class="shop-item-icon">💃</div>
+<div class="shop-item-info">
+<h4>The Velvet Lounge</h4>
+<p>Il Club Notturno</p>
+</div>
+</div>
+<div class="shop-item-desc">An exclusive nightclub where the city's elite come to forget their troubles. Neon lights, dark corners, and cash flowing like champagne.</div>
+<div class="shop-item-stats">
+<div class="shop-item-stat"><span class="label">PRICE</span><span class="val">$20K</span></div>
+<div class="shop-item-stat"><span class="label">INCOME</span><span class="val">$400/h</span></div>
+<div class="shop-item-stat"><span class="label">RISK</span><span class="val" style="color:#ff6347">HIGH</span></div>
+</div>
+</div>
+
 <div class="shop-footer">
 <button class="btn-gold" id="buyBtn" onclick="enterPlacement()">PLACE BUILDING</button>
 <button class="btn-ghost" onclick="closeShop()">CANCEL</button>
@@ -188,6 +204,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <div class="hud-row"><span>🎰 Casinos</span><span id="hCount">0</span></div>
 <div class="hud-row"><span>🚬 Warehouses</span><span id="hWCount">0</span></div>
 <div class="hud-row"><span>🏨 Apartments</span><span id="hACount">0</span></div>
+<div class="hud-row"><span>💃 Clubs</span><span id="hSCount">0</span></div>
 <div class="hud-row"><span>💵 Income/h</span><span>$<span id="hIncome">0</span></span></div>
 <div class="hud-div"></div>
 <button class="hud-btn" onclick="openShop()">THE BLACK MARKET</button>
@@ -203,15 +220,16 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <script src="https://cdn.jsdelivr.net/npm/meshoptimizer@0.20.0/meshopt_decoder.js"></script>
 <script>
 let scene,camera,renderer,player,loader,gameActive=true;
-let money=50000,casinos=[],warehouses=[],apartments=[],target=null,moving=false,placing=false;
+let money=50000,casinos=[],warehouses=[],apartments=[],stripclubs=[],target=null,moving=false,placing=false;
 let camDist=40,camMin=12,camMax=65;
 let placeGlow=null,placeInner=null,placeArrows=[];
 let wp=null,wpArr=[];
 let selectedItem=0;
 const BUILDINGS=[
-{name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:"LA CORONA D'ORO — ESTABLISHED"},
-{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.22,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
-{name:'Apartment',glb:'build.glb',price:10000,income:200,scale:14,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
+{name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:'LA CORONA D\'ORO - ESTABLISHED'},
+{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.22,rotY:0,toast:'IL MAGAZZINO - OPERATIONAL'},
+{name:'Apartment',glb:'build.glb',price:10000,income:200,scale:14,rotY:0,toast:'L\'APPARTAMENTO - ACQUIRED'},
+{name:'Strip Club',glb:'strip_club.glb',price:20000,income:400,scale:.007,rotY:0,toast:'IL CLUB NOTTURNO - OPEN FOR BUSINESS'}
 ];
 const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
 
@@ -283,10 +301,10 @@ st.textContent=`${type} not detected. Opening install page...`;setTimeout(()=>wi
 }
 
 function selectItem(i){
-if(i>2)return;
+if(i>3)return;
 selectedItem=i;
 document.querySelectorAll('.shop-item').forEach((el,idx)=>{
-if(idx<3)el.classList.toggle('selected',idx===i);
+if(idx<4)el.classList.toggle('selected',idx===i);
 });
 const b=BUILDINGS[i];
 document.getElementById('buyBtn').disabled=money<b.price;
@@ -362,12 +380,13 @@ m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
 scene.add(m);
 if(sel===0){casinos.push({model:m,pos})}
 else if(sel===1){warehouses.push({model:m,pos})}
-else{apartments.push({model:m,pos})}
+else if(sel===2){apartments.push({model:m,pos})}
+else{stripclubs.push({model:m,pos})}
 updateUI();toast(b.toast);
 },undefined,()=>{
 // Fallback box
 const g=new THREE.Group();
-const colors=[0x8B0000,0x4a3520,0x3a3a5a];
+const colors=[0x8B0000,0x4a3520,0x3a3a5a,0x4a0033];
 const fb=new THREE.Mesh(new THREE.BoxGeometry(3,3,4),new THREE.MeshStandardMaterial({color:colors[sel],roughness:.8}));
 fb.position.y=1.5;fb.castShadow=true;g.add(fb);
 const roof=new THREE.Mesh(new THREE.BoxGeometry(3.2,.2,4.2),new THREE.MeshStandardMaterial({color:0x333}));
@@ -377,7 +396,8 @@ sign.position.set(0,2.5,2.05);g.add(sign);
 g.position.set(pos.x,0,pos.z);scene.add(g);
 if(sel===0){casinos.push({model:g,pos})}
 else if(sel===1){warehouses.push({model:g,pos})}
-else{apartments.push({model:g,pos})}
+else if(sel===2){apartments.push({model:g,pos})}
+else{stripclubs.push({model:g,pos})}
 updateUI();toast(b.toast);
 });
 }
@@ -386,7 +406,8 @@ document.getElementById('hMoney').textContent=money.toLocaleString();
 document.getElementById('hCount').textContent=casinos.length;
 document.getElementById('hWCount').textContent=warehouses.length;
 document.getElementById('hACount').textContent=apartments.length;
-const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income+apartments.length*BUILDINGS[2].income;
+document.getElementById('hSCount').textContent=stripclubs.length;
+const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income+apartments.length*BUILDINGS[2].income+stripclubs.length*BUILDINGS[3].income;
 document.getElementById('hIncome').textContent=totalIncome.toLocaleString();
 }
 
@@ -985,6 +1006,9 @@ ctx.strokeStyle='#8B4513';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
 apartments.forEach(a=>{const mx=((a.pos.x+ms/2)/ms)*sz,my=((a.pos.z+ms/2)/ms)*sz;
 ctx.fillStyle='#6666aa';ctx.fillRect(mx-3,my-3,6,6);
 ctx.strokeStyle='#6666aa';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
+stripclubs.forEach(s=>{const mx=((s.pos.x+ms/2)/ms)*sz,my=((s.pos.z+ms/2)/ms)*sz;
+ctx.fillStyle='#cc00cc';ctx.fillRect(mx-3,my-3,6,6);
+ctx.strokeStyle='#cc00cc';ctx.lineWidth=1;ctx.strokeRect(mx-4,my-4,8,8)});
 const px=((player.position.x+ms/2)/ms)*sz,py=((player.position.z+ms/2)/ms)*sz;
 ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#F5E6D3';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.stroke();
@@ -995,7 +1019,7 @@ renderer.render(scene,camera)})();
 
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 setInterval(()=>{if(gameActive){
-const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income+apartments.length*BUILDINGS[2].income;
+const totalIncome=casinos.length*BUILDINGS[0].income+warehouses.length*BUILDINGS[1].income+apartments.length*BUILDINGS[2].income+stripclubs.length*BUILDINGS[3].income;
 if(totalIncome>0){money+=totalIncome/3600;updateUI()}
 }},1000);
 });

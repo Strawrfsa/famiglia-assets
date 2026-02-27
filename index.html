@@ -143,7 +143,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <div class="shop-item-top">
 <div class="shop-item-icon">🚬</div>
 <div class="shop-item-info">
-<h4>Tabacco Warehouse</h4>
+<h4>Tobacco Warehouse</h4>
 <p>Il Magazzino del Tabacco</p>
 </div>
 </div>
@@ -210,7 +210,7 @@ let wp=null,wpArr=[];
 let selectedItem=0;
 const BUILDINGS=[
 {name:'Casino',glb:'harlem_casino.glb',price:25000,income:500,scale:.5,rotY:Math.PI,toast:"LA CORONA D'ORO — ESTABLISHED"},
-{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.05,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
+{name:'Warehouse',glb:'tabacco_warehouse.glb',price:15000,income:300,scale:.22,rotY:0,toast:"IL MAGAZZINO — OPERATIONAL"},
 {name:'Apartment',glb:'build.glb',price:10000,income:200,scale:14,rotY:0,toast:"L'APPARTAMENTO — ACQUIRED"}
 ];
 const GLB_BASE='https://raw.githubusercontent.com/Strawrfsa/famiglia-assets/main/';
@@ -323,15 +323,29 @@ function exitPlacement(){placing=false;document.getElementById('placeBanner').cl
 if(placeGlow){placeGlow.visible=placeInner.visible=false}placeArrows.forEach(a=>a.visible=false)}
 
 function placeBuilding(pos){
-const b=BUILDINGS[selectedItem];
+const sel=selectedItem;
+const b=BUILDINGS[sel];
 if(money<b.price){toast('NOT ENOUGH MONEY!');return}
 if(Math.abs(pos.z)<4){toast('CANNOT BUILD ON THE ROAD!');return}
 if(Math.abs(pos.x)>42||Math.abs(pos.z)>42){toast('TOO FAR FROM YOUR TERRITORY!');return}
 money-=b.price;exitPlacement();
 loader.load(GLB_BASE+b.glb,g=>{
 const m=g.scene.clone();m.scale.set(b.scale,b.scale,b.scale);m.rotation.y=b.rotY;
-// For build.glb: remove LOD1, LOD2 duplicates and ground plane
-if(selectedItem===2){
+// Strip unwanted parts from models
+if(sel===1){
+// Warehouse: remove flat ground/base planes
+const toRemove=[];
+m.traverse(ch=>{
+if(ch.isMesh&&ch.geometry){
+ch.geometry.computeBoundingBox();
+const bb=ch.geometry.boundingBox;
+if(bb){const h=bb.max.y-bb.min.y,w=Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z);
+if(h<w*0.03)toRemove.push(ch)}
+}});
+toRemove.forEach(ch=>{if(ch.parent)ch.parent.remove(ch)});
+}
+if(sel===2){
+// Build: remove LOD duplicates and ground
 const toRemove=[];
 m.traverse(ch=>{
 if(ch.name&&(ch.name.includes('LOD1')||ch.name.includes('LOD2')||ch.name==='Plane'||ch.name.includes('Road')))
@@ -346,23 +360,23 @@ const bottomY=box.min.y;
 m.position.set(pos.x-center.x,-bottomY,pos.z-center.z);
 m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
 scene.add(m);
-if(selectedItem===0){casinos.push({model:m,pos})}
-else if(selectedItem===1){warehouses.push({model:m,pos})}
+if(sel===0){casinos.push({model:m,pos})}
+else if(sel===1){warehouses.push({model:m,pos})}
 else{apartments.push({model:m,pos})}
 updateUI();toast(b.toast);
 },undefined,()=>{
 // Fallback box
 const g=new THREE.Group();
 const colors=[0x8B0000,0x4a3520,0x3a3a5a];
-const fb=new THREE.Mesh(new THREE.BoxGeometry(3,3,4),new THREE.MeshStandardMaterial({color:colors[selectedItem],roughness:.8}));
+const fb=new THREE.Mesh(new THREE.BoxGeometry(3,3,4),new THREE.MeshStandardMaterial({color:colors[sel],roughness:.8}));
 fb.position.y=1.5;fb.castShadow=true;g.add(fb);
 const roof=new THREE.Mesh(new THREE.BoxGeometry(3.2,.2,4.2),new THREE.MeshStandardMaterial({color:0x333}));
 roof.position.y=3.1;g.add(roof);
 const sign=new THREE.Mesh(new THREE.BoxGeometry(2,.4,.1),new THREE.MeshStandardMaterial({color:0xD4AF37,emissive:0xD4AF37,emissiveIntensity:1}));
 sign.position.set(0,2.5,2.05);g.add(sign);
 g.position.set(pos.x,0,pos.z);scene.add(g);
-if(selectedItem===0){casinos.push({model:g,pos})}
-else if(selectedItem===1){warehouses.push({model:g,pos})}
+if(sel===0){casinos.push({model:g,pos})}
+else if(sel===1){warehouses.push({model:g,pos})}
 else{apartments.push({model:g,pos})}
 updateUI();toast(b.toast);
 });

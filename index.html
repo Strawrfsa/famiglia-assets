@@ -846,8 +846,11 @@ mats.forEach(mt=>{if(mt)mt.side=THREE.DoubleSide})}});
 player.add(model);
 // Animation
 if(g.animations&&g.animations.length>0){
+// Remove root motion (Hips position) so model stays in place
+const clip=g.animations[0];
+clip.tracks=clip.tracks.filter(t=>!(t.name.includes('Hips')&&t.name.includes('position')));
 playerMixer=new THREE.AnimationMixer(model);
-playerAction=playerMixer.clipAction(g.animations[0]);
+playerAction=playerMixer.clipAction(clip);
 playerAction.play();
 playerAction.timeScale=0;
 }

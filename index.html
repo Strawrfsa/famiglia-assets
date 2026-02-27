@@ -834,12 +834,11 @@ b.position.set(bx,.25,bz);b.rotation.y=Math.PI/2;scene.add(b);
 
 // === PLAYER ===
 player=new THREE.Group();
-let playerMixer=null,playerAction=null,playerClock=new THREE.Clock();
+let playerMixer=null,playerAction=null,lastFrameTime=performance.now();
 // Load Thomas Shelby model
 loader.load(GLB_BASE+'thomas_shelby.glb',g=>{
 const model=g.scene;
-model.scale.set(1.05,1.05,1.05);
-model.rotation.y=Math.PI; // face forward
+model.scale.set(2.2,2.2,2.2);
 model.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;
 const mats=Array.isArray(c.material)?c.material:[c.material];
 mats.forEach(mt=>{if(mt)mt.side=THREE.DoubleSide})}});
@@ -849,7 +848,7 @@ if(g.animations&&g.animations.length>0){
 playerMixer=new THREE.AnimationMixer(model);
 playerAction=playerMixer.clipAction(g.animations[0]);
 playerAction.play();
-playerAction.paused=true;
+playerAction.timeScale=0;
 }
 // Attach pistol to right hand
 let rightHand=null;
@@ -893,9 +892,9 @@ gunGroup.position.set(.45,.85,.15);
 player.add(gunGroup);player.gunGroup=gunGroup;player.muzzle=muzzle;
 });
 scene.add(player);
-const mk=new THREE.Mesh(new THREE.RingGeometry(.65,.95,32),new THREE.MeshBasicMaterial({color:0xD4AF37,side:THREE.DoubleSide,transparent:true,opacity:.6}));
+const mk=new THREE.Mesh(new THREE.RingGeometry(.9,1.3,32),new THREE.MeshBasicMaterial({color:0xD4AF37,side:THREE.DoubleSide,transparent:true,opacity:.6}));
 mk.rotation.x=-Math.PI/2;mk.position.y=.05;scene.add(mk);player.mk=mk;
-const gl=new THREE.Mesh(new THREE.CircleGeometry(1,32),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:.12,side:THREE.DoubleSide}));
+const gl=new THREE.Mesh(new THREE.CircleGeometry(1.4,32),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:.12,side:THREE.DoubleSide}));
 gl.rotation.x=-Math.PI/2;gl.position.y=.03;scene.add(gl);player.gl=gl;
 
 // === CONTROLS ===
@@ -933,8 +932,8 @@ if(now-lastShotTime<SHOT_COOLDOWN) return;
 lastShotTime=now;
 gunshotSfx.currentTime=0;gunshotSfx.play().catch(()=>{});
 const b=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),bulletMat);
-const dir=player.rotation.y;
-b.position.set(player.position.x+Math.sin(dir)*.8,1,player.position.z+Math.cos(dir)*.8);
+const dir=player.rotation.y-Math.PI;
+b.position.set(player.position.x+Math.sin(dir)*.8,1.2,player.position.z+Math.cos(dir)*.8);
 scene.add(b);
 const flash=new THREE.PointLight(0xFFAA00,3,10);
 flash.position.copy(b.position);scene.add(flash);
@@ -988,12 +987,13 @@ player.position.x=Math.max(-PLIM,Math.min(PLIM,player.position.x));
 player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
 player.mk.position.set(player.position.x,.05,player.position.z);
 player.gl.position.set(player.position.x,.03,player.position.z);
-player.rotation.y=Math.atan2(dx,dz);
-if(playerAction&&playerAction.paused)playerAction.paused=false;
+player.rotation.y=Math.atan2(dx,dz)+Math.PI;
+if(playerAction)playerAction.timeScale=1;
 playFootstep();
 }else{moving=false;player.position.y=0;removeWP();
-if(playerAction)playerAction.paused=true;}}
-if(playerMixer)playerMixer.update(playerClock.getDelta());
+if(playerAction)playerAction.timeScale=0;}}
+const now2=performance.now(),dt2=(now2-lastFrameTime)/1000;lastFrameTime=now2;
+if(playerMixer)playerMixer.update(Math.min(dt2,.05));
 if(player.mk)player.mk.material.opacity=.35+Math.sin(t*3)*.2;
 camera.position.x+=(player.position.x-camera.position.x)*.05;
 camera.position.z+=(player.position.z+camDist*.7-camera.position.z)*.05;
@@ -1052,7 +1052,7 @@ const px=((player.position.x+ms/2)/ms)*sz,py=((player.position.z+ms/2)/ms)*sz;
 ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#F5E6D3';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.stroke();
 ctx.strokeStyle='rgba(212,175,55,.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,py);
-ctx.lineTo(px+Math.sin(player.rotation.y)*10,py+Math.cos(player.rotation.y)*10);ctx.stroke();
+ctx.lineTo(px+Math.sin(player.rotation.y-Math.PI)*10,py+Math.cos(player.rotation.y-Math.PI)*10);ctx.stroke();
 ctx.strokeStyle='#D4AF37';ctx.lineWidth=2;ctx.strokeRect(0,0,sz,sz)}
 renderer.render(scene,camera)})();
 

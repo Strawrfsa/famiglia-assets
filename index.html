@@ -839,6 +839,7 @@ let playerMixer=null,playerAction=null,lastFrameTime=performance.now();
 loader.load(GLB_BASE+'thomas_shelby.glb',g=>{
 const model=g.scene;
 model.scale.set(2.2,2.2,2.2);
+model.rotation.y=Math.PI;
 model.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;
 const mats=Array.isArray(c.material)?c.material:[c.material];
 mats.forEach(mt=>{if(mt)mt.side=THREE.DoubleSide})}});
@@ -932,7 +933,7 @@ if(now-lastShotTime<SHOT_COOLDOWN) return;
 lastShotTime=now;
 gunshotSfx.currentTime=0;gunshotSfx.play().catch(()=>{});
 const b=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),bulletMat);
-const dir=player.rotation.y-Math.PI;
+const dir=player.rotation.y;
 b.position.set(player.position.x+Math.sin(dir)*.8,1.2,player.position.z+Math.cos(dir)*.8);
 scene.add(b);
 const flash=new THREE.PointLight(0xFFAA00,3,10);
@@ -987,7 +988,7 @@ player.position.x=Math.max(-PLIM,Math.min(PLIM,player.position.x));
 player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
 player.mk.position.set(player.position.x,.05,player.position.z);
 player.gl.position.set(player.position.x,.03,player.position.z);
-player.rotation.y=Math.atan2(dx,dz)+Math.PI;
+player.rotation.y=Math.atan2(dx,dz);
 if(playerAction)playerAction.timeScale=1;
 playFootstep();
 }else{moving=false;player.position.y=0;removeWP();
@@ -1052,7 +1053,7 @@ const px=((player.position.x+ms/2)/ms)*sz,py=((player.position.z+ms/2)/ms)*sz;
 ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#F5E6D3';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.stroke();
 ctx.strokeStyle='rgba(212,175,55,.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,py);
-ctx.lineTo(px+Math.sin(player.rotation.y-Math.PI)*10,py+Math.cos(player.rotation.y-Math.PI)*10);ctx.stroke();
+ctx.lineTo(px+Math.sin(player.rotation.y)*10,py+Math.cos(player.rotation.y)*10);ctx.stroke();
 ctx.strokeStyle='#D4AF37';ctx.lineWidth=2;ctx.strokeRect(0,0,sz,sz)}
 renderer.render(scene,camera)})();
 

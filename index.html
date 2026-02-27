@@ -376,7 +376,9 @@ const box=new THREE.Box3().setFromObject(m);
 const center=box.getCenter(new THREE.Vector3());
 const bottomY=box.min.y;
 m.position.set(pos.x-center.x,-bottomY,pos.z-center.z);
-m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
+m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;
+const mats=Array.isArray(c.material)?c.material:[c.material];
+mats.forEach(mt=>{if(mt)mt.side=THREE.DoubleSide})}});
 scene.add(m);
 if(sel===0){casinos.push({model:m,pos})}
 else if(sel===1){warehouses.push({model:m,pos})}

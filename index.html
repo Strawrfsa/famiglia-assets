@@ -834,7 +834,7 @@ b.position.set(bx,.25,bz);b.rotation.y=Math.PI/2;scene.add(b);
 
 // === PLAYER ===
 player=new THREE.Group();
-let playerMixer=null,playerAction=null,lastFrameTime=performance.now();
+let playerMixer=null,playerAction=null,playerClock=new THREE.Clock();
 // Load Thomas Shelby model
 loader.load(GLB_BASE+'thomas_shelby.glb',g=>{
 const model=g.scene;
@@ -850,8 +850,6 @@ const clip=g.animations[0];
 clip.tracks=clip.tracks.filter(t=>!(t.name.includes('Hips')&&t.name.includes('position')));
 playerMixer=new THREE.AnimationMixer(model);
 playerAction=playerMixer.clipAction(clip);
-playerAction.play();
-playerAction.timeScale=0;
 }
 // Attach pistol to right hand
 let rightHand=null;
@@ -935,7 +933,7 @@ if(now-lastShotTime<SHOT_COOLDOWN) return;
 lastShotTime=now;
 gunshotSfx.currentTime=0;gunshotSfx.play().catch(()=>{});
 const b=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),bulletMat);
-const dir=player.rotation.y+Math.PI;
+const dir=player.rotation.y;
 b.position.set(player.position.x+Math.sin(dir)*.8,1.2,player.position.z+Math.cos(dir)*.8);
 scene.add(b);
 const flash=new THREE.PointLight(0xFFAA00,3,10);
@@ -990,13 +988,12 @@ player.position.x=Math.max(-PLIM,Math.min(PLIM,player.position.x));
 player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
 player.mk.position.set(player.position.x,.05,player.position.z);
 player.gl.position.set(player.position.x,.03,player.position.z);
-player.rotation.y=Math.atan2(-dx,-dz);
-if(playerAction)playerAction.timeScale=1;
+player.rotation.y=Math.atan2(dx,dz);
+if(playerAction&&!playerAction.isRunning()){playerAction.reset();playerAction.play()}
 playFootstep();
 }else{moving=false;player.position.y=0;removeWP();
-if(playerAction){playerAction.timeScale=0;playerAction.time=0;if(playerMixer)playerMixer.update(0)}}}
-const now2=performance.now(),dt2=(now2-lastFrameTime)/1000;lastFrameTime=now2;
-if(playerMixer)playerMixer.update(Math.min(dt2,.05));
+if(playerAction&&playerAction.isRunning())playerAction.stop()}}
+if(playerMixer)playerMixer.update(playerClock.getDelta());
 if(player.mk)player.mk.material.opacity=.35+Math.sin(t*3)*.2;
 camera.position.x+=(player.position.x-camera.position.x)*.05;
 camera.position.z+=(player.position.z+camDist*.7-camera.position.z)*.05;
@@ -1055,7 +1052,7 @@ const px=((player.position.x+ms/2)/ms)*sz,py=((player.position.z+ms/2)/ms)*sz;
 ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#F5E6D3';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.stroke();
 ctx.strokeStyle='rgba(212,175,55,.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,py);
-ctx.lineTo(px+Math.sin(player.rotation.y+Math.PI)*10,py+Math.cos(player.rotation.y+Math.PI)*10);ctx.stroke();
+ctx.lineTo(px+Math.sin(player.rotation.y)*10,py+Math.cos(player.rotation.y)*10);ctx.stroke();
 ctx.strokeStyle='#D4AF37';ctx.lineWidth=2;ctx.strokeRect(0,0,sz,sz)}
 renderer.render(scene,camera)})();
 

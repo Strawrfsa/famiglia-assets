@@ -272,7 +272,7 @@ src.start(t);src.stop(t+0.08);
 
 let bullets=[],explosions=[];
 let lastShotTime=0;
-const SHOT_COOLDOWN=1000;
+const SHOT_COOLDOWN=600;
 
 function toast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d)}
 function openWallet(){document.getElementById('walletMod').classList.add('active');document.getElementById('walletOv').classList.add('active')}
@@ -859,6 +859,7 @@ gclip.tracks=gclip.tracks.filter(t=>!(t.name.includes('Hips')&&t.name.includes('
 gunplayAction=playerMixer.clipAction(gclip);
 gunplayAction.setLoop(THREE.LoopOnce,1);
 gunplayAction.clampWhenFinished=true;
+gunplayAction.timeScale=2.5;
 // When gunplay finishes, return to idle
 playerMixer.addEventListener('finished',e=>{
 if(e.action===gunplayAction){

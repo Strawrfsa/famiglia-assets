@@ -850,9 +850,6 @@ const clip=g.animations[0];
 clip.tracks=clip.tracks.filter(t=>!(t.name.includes('Hips')&&t.name.includes('position')));
 playerMixer=new THREE.AnimationMixer(model);
 playerAction=playerMixer.clipAction(clip);
-playerAction.play();
-playerAction.timeScale=0;
-playerAction.clampWhenFinished=false;
 }
 // Attach pistol to right hand
 let rightHand=null;
@@ -861,23 +858,17 @@ if(rightHand){
 const gunMat=new THREE.MeshStandardMaterial({color:0x222,metalness:.8,roughness:.2});
 const woodMat2=new THREE.MeshStandardMaterial({color:0x3a1a08,roughness:.8,metalness:.05});
 const gunGroup=new THREE.Group();
-// Barrel
-const barrel=M(new THREE.CylinderGeometry(.012,.012,.35,8),gunMat,0,0,0);
-barrel.rotation.x=Math.PI/2;gunGroup.add(barrel);
-// Body
-gunGroup.add(M(new THREE.BoxGeometry(.04,.035,.2),gunMat,0,-.005,-.02));
-// Cylinder
-gunGroup.add(M(new THREE.CylinderGeometry(.03,.03,.045,12),gunMat,0,-.015,-.05));
-// Grip
-gunGroup.add(M(new THREE.BoxGeometry(.03,.08,.025),woodMat2,0,-.05,-.08));
-// Trigger guard
-gunGroup.add(M(new THREE.BoxGeometry(.02,.01,.04),gunMat,0,-.035,-.06));
-// Muzzle flash point
-const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.008,4,4),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:0}));
-muzzle.position.set(0,0,.18);gunGroup.add(muzzle);
-gunGroup.scale.set(5,5,5);
-gunGroup.position.set(0,.02,0);
-gunGroup.rotation.set(-Math.PI/2,0,Math.PI/2);
+gunGroup.add(M(new THREE.CylinderGeometry(.015,.015,.4,8),gunMat,0,0,.2));
+gunGroup.children[0].rotation.x=Math.PI/2;
+gunGroup.add(M(new THREE.BoxGeometry(.05,.04,.22),gunMat,0,0,.05));
+gunGroup.add(M(new THREE.CylinderGeometry(.04,.04,.05,12),gunMat,0,-.03,.02));
+gunGroup.add(M(new THREE.BoxGeometry(.035,.035,.15),woodMat2,0,.005,-.1));
+gunGroup.add(M(new THREE.BoxGeometry(.025,.05,.02),woodMat2,0,-.025,-.02));
+const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.01,4,4),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:0}));
+muzzle.position.set(0,0,.4);gunGroup.add(muzzle);
+gunGroup.scale.set(2.5,2.5,2.5);
+gunGroup.position.set(0,.05,.08);
+gunGroup.rotation.set(Math.PI/2,0,0);
 rightHand.add(gunGroup);
 player.gunGroup=gunGroup;
 player.muzzle=muzzle;
@@ -998,10 +989,10 @@ player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
 player.mk.position.set(player.position.x,.05,player.position.z);
 player.gl.position.set(player.position.x,.03,player.position.z);
 player.rotation.y=Math.atan2(dx,dz);
-if(playerAction)playerAction.timeScale=1;
+if(playerAction&&!playerAction.isRunning()){playerAction.reset();playerAction.play()}
 playFootstep();
 }else{moving=false;player.position.y=0;removeWP();
-if(playerAction){playerAction.timeScale=0;playerAction.time=0}}}
+if(playerAction&&playerAction.isRunning())playerAction.stop()}}
 if(playerMixer)playerMixer.update(playerClock.getDelta());
 if(player.mk)player.mk.material.opacity=.35+Math.sin(t*3)*.2;
 camera.position.x+=(player.position.x-camera.position.x)*.05;

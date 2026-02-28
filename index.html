@@ -834,7 +834,8 @@ b.position.set(bx,.25,bz);b.rotation.y=Math.PI/2;scene.add(b);
 
 // === PLAYER ===
 player=new THREE.Group();
-let playerMixer=null,playerAction=null,playerClock=new THREE.Clock();
+let playerMixer=null,runAction=null,gunplayAction=null,playerClock=new THREE.Clock();
+let isShooting=false;
 // Load Thomas Shelby model
 loader.load(GLB_BASE+'thomas_shelby.glb',g=>{
 const model=g.scene;
@@ -843,32 +844,54 @@ model.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;
 const mats=Array.isArray(c.material)?c.material:[c.material];
 mats.forEach(mt=>{if(mt)mt.side=THREE.DoubleSide})}});
 player.add(model);
-// Animation
+playerMixer=new THREE.AnimationMixer(model);
+// Run animation
 if(g.animations&&g.animations.length>0){
-// Remove root motion (Hips position) so model stays in place
 const clip=g.animations[0];
 clip.tracks=clip.tracks.filter(t=>!(t.name.includes('Hips')&&t.name.includes('position')));
-playerMixer=new THREE.AnimationMixer(model);
-playerAction=playerMixer.clipAction(clip);
+runAction=playerMixer.clipAction(clip);
 }
+// Load gunplay animation
+loader.load(GLB_BASE+'gunplay.glb',g2=>{
+if(g2.animations&&g2.animations.length>0){
+const gclip=g2.animations[0];
+gclip.tracks=gclip.tracks.filter(t=>!(t.name.includes('Hips')&&t.name.includes('position')));
+gunplayAction=playerMixer.clipAction(gclip);
+gunplayAction.setLoop(THREE.LoopOnce,1);
+gunplayAction.clampWhenFinished=true;
+// When gunplay finishes, return to idle
+playerMixer.addEventListener('finished',e=>{
+if(e.action===gunplayAction){
+isShooting=false;
+gunplayAction.stop();
+// If still moving, resume run
+if(moving&&runAction){runAction.reset();runAction.play()}
+}
+});
+}
+});
 // Attach pistol to right hand
 let rightHand=null;
 model.traverse(c=>{if(c.name==='mixamorig:RightHand')rightHand=c});
 if(rightHand){
-const gunMat=new THREE.MeshStandardMaterial({color:0x222,metalness:.8,roughness:.2});
-const woodMat2=new THREE.MeshStandardMaterial({color:0x3a1a08,roughness:.8,metalness:.05});
+const gunMat=new THREE.MeshStandardMaterial({color:0x111,metalness:.9,roughness:.15});
+const woodMat=new THREE.MeshStandardMaterial({color:0x3a1a08,roughness:.7});
 const gunGroup=new THREE.Group();
-gunGroup.add(M(new THREE.CylinderGeometry(.015,.015,.4,8),gunMat,0,0,.2));
-gunGroup.children[0].rotation.x=Math.PI/2;
-gunGroup.add(M(new THREE.BoxGeometry(.05,.04,.22),gunMat,0,0,.05));
-gunGroup.add(M(new THREE.CylinderGeometry(.04,.04,.05,12),gunMat,0,-.03,.02));
-gunGroup.add(M(new THREE.BoxGeometry(.035,.035,.15),woodMat2,0,.005,-.1));
-gunGroup.add(M(new THREE.BoxGeometry(.025,.05,.02),woodMat2,0,-.025,-.02));
-const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.01,4,4),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:0}));
-muzzle.position.set(0,0,.4);gunGroup.add(muzzle);
-gunGroup.scale.set(2.5,2.5,2.5);
-gunGroup.position.set(0,.05,.08);
-gunGroup.rotation.set(Math.PI/2,0,0);
+// Barrel
+const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2,8),gunMat);
+barrel.rotation.x=Math.PI/2;barrel.position.z=.8;gunGroup.add(barrel);
+// Slide body
+gunGroup.add(M(new THREE.BoxGeometry(.28,.22,1.4),gunMat,0,.02,0));
+// Grip
+gunGroup.add(M(new THREE.BoxGeometry(.22,.55,.18),woodMat,0,-.35,-.45));
+// Trigger guard
+gunGroup.add(M(new THREE.BoxGeometry(.15,.06,.25),gunMat,0,-.18,-.2));
+// Muzzle flash
+const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.05,4,4),new THREE.MeshBasicMaterial({color:0xD4AF37,transparent:true,opacity:0}));
+muzzle.position.set(0,0,1.5);gunGroup.add(muzzle);
+gunGroup.scale.set(.12,.12,.12);
+gunGroup.position.set(.02,.03,.08);
+gunGroup.rotation.set(-Math.PI/2,0,Math.PI/2);
 rightHand.add(gunGroup);
 player.gunGroup=gunGroup;
 player.muzzle=muzzle;
@@ -929,8 +952,13 @@ new THREE.MeshBasicMaterial({color:0xFFAA00,transparent:true})
 
 function shoot(){
 const now=Date.now();
-if(now-lastShotTime<SHOT_COOLDOWN) return;
+if(now-lastShotTime<SHOT_COOLDOWN||isShooting) return;
 lastShotTime=now;
+isShooting=true;
+// Stop running, play gunplay
+if(runAction&&runAction.isRunning())runAction.stop();
+if(gunplayAction){gunplayAction.reset();gunplayAction.play()}
+else{setTimeout(()=>{isShooting=false},300)}
 gunshotSfx.currentTime=0;gunshotSfx.play().catch(()=>{});
 const b=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),bulletMat);
 const dir=player.rotation.y;
@@ -982,17 +1010,17 @@ sun.position.set(Math.cos(t*.05)*40,15+sunY*25,Math.sin(t*.05)*40);
 const fogC=new THREE.Color().lerpColors(new THREE.Color(0x0a0a12),new THREE.Color(0x1a1815),dayF);
 scene.fog.color.copy(fogC);
 
-if(moving&&target){const dx=target.x-player.position.x,dz=target.z-player.position.z,d=Math.sqrt(dx*dx+dz*dz);
+if(moving&&target&&!isShooting){const dx=target.x-player.position.x,dz=target.z-player.position.z,d=Math.sqrt(dx*dx+dz*dz);
 if(d>.5){player.position.x+=(dx/d)*.22;player.position.z+=(dz/d)*.22;
 player.position.x=Math.max(-PLIM,Math.min(PLIM,player.position.x));
 player.position.z=Math.max(-PLIM,Math.min(PLIM,player.position.z));
 player.mk.position.set(player.position.x,.05,player.position.z);
 player.gl.position.set(player.position.x,.03,player.position.z);
 player.rotation.y=Math.atan2(dx,dz);
-if(playerAction&&!playerAction.isRunning()){playerAction.reset();playerAction.play()}
+if(runAction&&!runAction.isRunning()){runAction.reset();runAction.play()}
 playFootstep();
 }else{moving=false;player.position.y=0;removeWP();
-if(playerAction&&playerAction.isRunning())playerAction.stop()}}
+if(runAction&&runAction.isRunning())runAction.stop()}}
 if(playerMixer)playerMixer.update(playerClock.getDelta());
 if(player.mk)player.mk.material.opacity=.35+Math.sin(t*3)*.2;
 camera.position.x+=(player.position.x-camera.position.x)*.05;
